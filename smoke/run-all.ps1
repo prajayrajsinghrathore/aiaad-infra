@@ -89,11 +89,11 @@ if ($LASTEXITCODE -eq 0) {
         Add-Check "Neo4jConnectivity" "FAIL" "Unreachable."
     }
 
-    $null = kubectl exec -n aiaad-platform $TestPod -- curl -s --connect-timeout 5 -I https://dev.azure.com 2>$null
+    $null = kubectl exec -n aiaad-platform $TestPod -- curl -s --connect-timeout 5 -I https://api.openai.com 2>$null
     if ($LASTEXITCODE -eq 0) {
-        Add-Check "FoundryConnectivity" "PASS" "Reachable."
+        Add-Check "OpenAiConnectivity" "PASS" "Reachable."
     } else {
-        Add-Check "FoundryConnectivity" "FAIL" "Unreachable."
+        Add-Check "OpenAiConnectivity" "FAIL" "Unreachable."
     }
     
     $null = kubectl delete pod $TestPod -n aiaad-platform --ignore-not-found 2>$null

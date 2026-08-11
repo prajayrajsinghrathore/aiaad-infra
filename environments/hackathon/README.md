@@ -12,4 +12,4 @@ Before running the bootstrap/setup scripts, the operator MUST supply/configure t
    Kubernetes ServiceAccounts will federate with Azure User-Assigned Managed Identities (UAMIs). Ensure UAMI resource IDs / client IDs are provisioned and mapped where required (e.g. in [identity/README.md](file:///f:/AI-AAD/aiaad-infra/identity/README.md)).
 
 3. **External Secret References**:
-   Ensure external dependency credentials (Neo4j passwords, Azure AI Foundry keys) are populated securely using the cluster's secret store (e.g., CSO or Azure Key Vault Provider).
+   Ensure external dependency credentials (Neo4j passwords, OpenAI credentials) are populated securely using the cluster's secret store (e.g., CSO or Azure Key Vault Provider).

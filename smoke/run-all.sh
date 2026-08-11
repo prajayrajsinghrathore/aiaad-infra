@@ -79,10 +79,10 @@ if kubectl run $TEST_POD -n aiaad-platform --image=curlimages/curl --restart=Nev
     check_status "Neo4jConnectivity" "FAIL" "Unreachable."
   fi
 
-  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://dev.azure.com >/dev/null 2>&1; then
-    check_status "FoundryConnectivity" "PASS" "Reachable."
+  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://api.openai.com >/dev/null 2>&1; then
+    check_status "OpenAiConnectivity" "PASS" "Reachable."
   else
-    check_status "FoundryConnectivity" "FAIL" "Unreachable."
+    check_status "OpenAiConnectivity" "FAIL" "Unreachable."
   fi
 
   kubectl delete pod $TEST_POD -n aiaad-platform --ignore-not-found >/dev/null 2>&1

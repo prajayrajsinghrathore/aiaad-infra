@@ -22,5 +22,5 @@ azure:
 externalServices:
   # Managed service endpoints (non-secret DNS / configuration paths)
   neo4jUri: "bolt+routing://neo4j-aura-placeholder:7687"
-  azureAiFoundryEndpoint: "https://aiaad-foundry-placeholder.openai.azure.com/"
+  openAiApiEndpoint: "https://api.openai.com"
   sharePointTenantUrl: "https://placeholder.sharepoint.com"

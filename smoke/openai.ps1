@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Continue"
 
-Write-Host "Running Azure AI Foundry Connectivity & Auth Smoke Test..."
+Write-Host "Running OpenAI API Connectivity Smoke Test..."
 
 $EnvFile = Join-Path $PSScriptRoot "..\environments\hackathon\environment.yaml"
 if (-not (Test-Path $EnvFile)) {
@@ -11,20 +11,20 @@ if (-not (Test-Path $EnvFile)) {
 
 $EnvContent = Get-Content $EnvFile -Raw
 $Endpoint = $null
-if ($EnvContent -match 'azureAiFoundryEndpoint:\s*"([^"]*)"') {
+if ($EnvContent -match 'openAiApiEndpoint:\s*"([^"]*)"') {
     $Endpoint = $Matches[1]
 }
 
-if (-not $Endpoint -or $Endpoint -match "placeholder") {
+if (-not $Endpoint) {
     Write-Host "STATUS=BLOCKED"
-    Write-Host "BLOCKERS/DEVIATIONS: Azure AI Foundry endpoint is set to a placeholder ('$Endpoint'). Update environments/hackathon/environment.yaml with the real endpoint before running this test."
+    Write-Host "BLOCKERS/DEVIATIONS: OpenAI API endpoint is not set. Update environments/hackathon/environment.yaml."
     exit 1
 }
 
 Write-Host "Endpoint: $Endpoint"
 Write-Host "Testing network connectivity and TLS..."
 
-$TestPod = "foundry-smoke-$PID"
+$TestPod = "openai-smoke-$PID"
 $null = kubectl run $TestPod -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 2>$null
 $null = kubectl wait --for=condition=Ready pod/$TestPod -n aiaad-platform --timeout=30s 2>$null
 
@@ -38,7 +38,5 @@ if ($LASTEXITCODE -eq 0) {
 }
 
 $null = kubectl delete pod $TestPod -n aiaad-platform --ignore-not-found 2>$null
-
-Write-Host "`nNote: Full authentication via Workload Identity (federated credentials) must be validated by the application SDK (e.g. DefaultAzureCredential). This script validates the network path is open."
 Write-Host "STATUS=READY"
 exit 0

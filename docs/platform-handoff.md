@@ -52,9 +52,9 @@ Egress traffic is natively permitted (`ALLOW_ANY`) within the cluster network co
 - **Endpoint Key:** Defined by `neo4jUri` in `environments/*/environment.yaml`
 - **Credentials:** Bound to the `aiaad-neo4j-credentials` Kubernetes secret (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`). Do not hardcode URI in the app.
 
-### 3.2 Azure AI Foundry (OpenAI)
-- **Endpoint Key:** Defined by `azureAiFoundryEndpoint` in `environments/*/environment.yaml`
-- **Auth:** Must use **Azure Workload Identity** (federated tokens). Static API keys are explicitly banned. Ensure your Azure Identity SDK (e.g. `DefaultAzureCredential`) is configured to leverage the managed identity.
+### 3.2 OpenAI API
+- **Endpoint Key:** Defined by `openAiApiEndpoint` in `environments/*/environment.yaml`
+- **Auth:** Connection is established via the configured OpenAI service account credentials. Ensure proper integration with the application secrets.
 
 ### 3.3 Azure DevOps (ADO)
 - **Auth:** Bound to the `aiaad-ado-credentials` Kubernetes secret (`ADO_PAT`). 
@@ -66,7 +66,7 @@ Egress traffic is natively permitted (`ALLOW_ANY`) within the cluster network co
 
 ## 4. Workload Scaling (KEDA)
 If your workers scale on Kafka lag, do **NOT** use default scaling limits.
-- **Requirement:** You must set explicit `minReplicaCount` and `maxReplicaCount` to avoid overwhelming Azure AI Foundry quotas and incurring cascading HTTP 429 errors.
+- **Requirement:** You must set explicit `minReplicaCount` and `maxReplicaCount` to avoid overwhelming OpenAI API quotas and incurring cascading HTTP 429 errors.
 - **Templates:** See `keda/templates/kafka-scaledobject.template.yaml`.
 
 ---

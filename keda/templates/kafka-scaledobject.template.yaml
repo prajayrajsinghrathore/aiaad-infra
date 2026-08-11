@@ -12,7 +12,7 @@ spec:
     kind: Deployment
   # IMPORTANT: Set limits explicitly.
   minReplicaCount: 1
-  maxReplicaCount: 5 # EXTREME CAUTION: High max replicas scaling off Kafka lag can overwhelm Azure AI Foundry quotas.
+  maxReplicaCount: 5 # EXTREME CAUTION: High max replicas scaling off Kafka lag can overwhelm OpenAI API quotas.
   triggers:
   - type: kafka
     metadata:
