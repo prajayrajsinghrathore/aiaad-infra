@@ -166,18 +166,18 @@ next INF work packages become READY</pre>
 <table>
 <tr><th>Concern</th><th>Decision</th></tr>
 <tr><td>AKS namespaces</td><td><code>aiaad-platform</code> for apps/workers; <code>aiaad-infra</code> for self-hosted infrastructure.</td></tr>
-<tr><td>Ingress/service mesh</td><td>Reuse existing AKS Istio and existing approved Gateway. No second ingress stack.</td></tr>
-<tr><td>PostgreSQL</td><td>Self-hosted in <code>aiaad-infra</code>; DBs <code>aiaad</code>, <code>temporal</code>, <code>temporal_visibility</code>.</td></tr>
+<tr><td>Ingress/service mesh</td><td>Istio removed. Deployed native NGINX Ingress and Jetstack Cert-Manager.</td></tr>
+<tr><td>PostgreSQL</td><td>Self-hosted in <code>aiaad-infra</code> (local deployment used for hackathon); DBs <code>aiaad</code>, <code>temporal</code>, <code>temporal_visibility</code>.</td></tr>
 <tr><td>Vector store</td><td>pgvector enabled in <code>aiaad</code>.</td></tr>
 <tr><td>Temporal</td><td>Temporal OSS self-hosted; modest non-HA hackathon deployment; Temporal namespace <code>aiaad-hackathon</code>.</td></tr>
 <tr><td>Kafka</td><td>Self-hosted one-node KRaft, broker+controller, replication factor 1, non-critical.</td></tr>
-<tr><td>Neo4j</td><td>AuraDB Free/Trial external dependency; not self-hosted in AKS.</td></tr>
-<tr><td>AI provider</td><td>Azure AI Foundry/OpenAI external dependency.</td></tr>
-<tr><td>Object storage</td><td>Prefer Azure Blob in AKS; MinIO for local, and AKS only if explicitly selected.</td></tr>
+<tr><td>Neo4j</td><td>AuraDB Free/Trial external dependency; not self-hosted in AKS. Mapped via Key Vault secret (aiaad-neo4j-password).</td></tr>
+<tr><td>AI provider</td><td>Azure OpenAI removed. Authenticated to OpenAI API endpoint (api.openai.com) via service account credentials stored in Key Vault (openai-service-account) and synced using Secrets Store CSI Driver.</td></tr>
+<tr><td>Object storage</td><td>Azure Blob storage container 'sharepoint' used to mimic SharePoint storage, using Workload Identity client ID <code>704c6f12-edb0-4ac5-93ae-c025a402e096</code>.</td></tr>
 <tr><td>Redis</td><td>Optional; install only for a named consumer/use case.</td></tr>
-<tr><td>Azure identity</td><td>UAMI + federated workload identity according to existing organisational AKS pattern.</td></tr>
-<tr><td>ADO</td><td>External; PAT used by connector later, never stored in infra repo.</td></tr>
-<tr><td>SharePoint</td><td>External; Entra/Microsoft Graph path validated here, connector implemented elsewhere.</td></tr>
+<tr><td>Azure identity</td><td>UAMI + federated workload identity according to existing organisational AKS pattern (Workload Identity Client ID: <code>704c6f12-edb0-4ac5-93ae-c025a402e096</code>).</td></tr>
+<tr><td>ADO</td><td>External; PAT retrieved from Key Vault (aiaad-ado-pat) synced via CSI Driver, never stored in infra repo.</td></tr>
+<tr><td>SharePoint</td><td>Mocked via Azure Blob Storage container named <code>sharepoint</code>. Microsoft Graph/SharePoint API path connectivity validated.</td></tr>
 <tr><td>IaC</td><td>No Terraform/Bicep. Use deterministic Helm/kubectl bootstrap scripts and versioned values.</td></tr>
 </table>
 </section>
@@ -435,7 +435,7 @@ INF-21 + INF-22 + INF-23
 </section>
 
 <section id="namespaces">
-<h2>10. Kubernetes namespaces and Istio boundary</h2>
+<h2>10. Kubernetes namespaces and Ingress boundary</h2>
 <pre>aiaad-infra
   PostgreSQL
   Temporal
@@ -447,17 +447,16 @@ aiaad-platform
   workers
   UI/BFF
 
-existing Istio installation
-  existing approved Gateway
-       │
-       └── project VirtualService → only UI/BFF later
+NGINX Ingress (natively deployed in AKS)
+     │
+     └── Ingress routes → only UI/BFF later
 
 External egress
   Foundry/OpenAI
   Neo4j Aura
   Azure DevOps
   Microsoft Graph/SharePoint</pre>
-<div class="callout red"><strong>Do not create:</strong> a second Istio Gateway, NGINX Ingress, Traefik, wildcard egress, or public routes to Temporal UI/pgAdmin/Kafka UI/RedisInsight.</div>
+<div class="callout amber"><strong>Ingress Boundary:</strong> Managed Istio has been removed. All routing is handled natively via NGINX Ingress and Jetstack Cert-Manager. Do not expose public routes to Temporal UI/pgAdmin/Kafka UI/RedisInsight.</div>
 </section>
 
 <section id="database">
@@ -1385,19 +1384,19 @@ Optional
 <h2>18. Final infrastructure Definition of Done</h2>
 <ul class="check">
 <li>Existing aiaad-infra repo is validated and governed by AGENTS.md/.ai skills.</li>
-<li>Exactly aiaad-infra and aiaad-platform project namespaces exist with correct discovered mesh/identity configuration.</li>
-<li>No second ingress controller or Istio Gateway has been introduced.</li>
+<li>Exactly aiaad-infra and aiaad-platform project namespaces exist with correct workload identity and Key Vault SecretProviderClass configuration.</li>
+<li>No external ingress controller other than the natively deployed NGINX Ingress has been introduced. Managed Istio has been fully removed.</li>
 <li>PostgreSQL is persistent and databases aiaad, temporal and temporal_visibility exist.</li>
 <li>pgvector works in aiaad.</li>
 <li>Temporal OSS is healthy, persistent and has aiaad-hackathon namespace.</li>
 <li>Temporal wait/signal/restart smoke passes.</li>
 <li>Kafka single-node KRaft is healthy and approved topics exist.</li>
 <li>Kafka is documented/tested as non-critical.</li>
-<li>Azure Blob connectivity works using workload identity, or an explicit approved alternative is documented.</li>
+<li>Azure Blob connectivity works using workload identity (UAMI client ID <code>704c6f12-edb0-4ac5-93ae-c025a402e096</code>), mock SharePoint container created and tested.</li>
 <li>Redis is either intentionally omitted or deployed for a named use case.</li>
-<li>Istio VirtualService configuration references the existing approved Gateway and host.</li>
-<li>Required external egress/connectivity to Neo4j Aura, Foundry, ADO and Microsoft Graph is READY or has an explicit BLOCKED/degraded decision.</li>
-<li>Admin tooling is private and reachable by approved operator method.</li>
+<li>Kubernetes Ingress configuration references the native NGINX controller and host.</li>
+<li>Required external egress/connectivity to Neo4j Aura, OpenAI API (api.openai.com), ADO, and Microsoft Graph/SharePoint is validated and passing connectivity smoke tests.</li>
+<li>Admin tooling is private and reachable by approved operator port-forwarding methods.</li>
 <li>One deterministic bootstrap entrypoint can establish required infra idempotently.</li>
 <li>One infra smoke command produces READY/DEGRADED/SKIPPED/BLOCKED/FAILED per component.</li>
 <li>Failure drills have been run for critical self-hosted components.</li>
