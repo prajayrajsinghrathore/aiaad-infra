@@ -10,7 +10,7 @@ This file tracks pending tasks and deferred configurations for the infrastructur
 
 ## Infrastructure Work Packages
 - [ ] Complete remaining INF work packages as required.
-- [ ] Set up production-grade PostgreSQL (if not using local deployment).
+- [x] Set up production-grade PostgreSQL (using local self-hosted deployment for hackathon).
 - [x] Update the SharePoint endpoint in the connectivity diagnostic scripts with the correct tenant URL (currently uses placeholder `microsoft.sharepoint.com` causing DNS failures).
 - [x] Configure the OpenAI API endpoint and credentials/service account to pass the connectivity tests.
 - [x] Refactor the main smoke test suite (`smoke/run-all.sh` and `smoke/run-all.ps1`) to invoke the specialized diagnostic scripts (`neo4j-connectivity`, `openai`, `ado-graph-connectivity`) instead of using hardcoded URLs.
