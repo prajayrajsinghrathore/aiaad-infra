@@ -4,7 +4,7 @@
 storage:
   # The storage class to use for self-hosted persistent workloads (PostgreSQL, Kafka, Temporal)
   # For AKS, this is typically default, managed-csi, or azurefile-csi.
-  storageClass: "standard"
+  storageClass: "managed-csi"
   
   # Persistent volume size definitions for hackathon
   postgres:

@@ -8,7 +8,6 @@ This repository is organized logically by component and concern:
 - **`namespaces/`**: Defines the two target namespaces: `aiaad-infra` and `aiaad-platform`.
 - **`bootstrap/`**: Idempotent entrypoint scripts (`bootstrap.sh`, `bootstrap.ps1`) and prerequisite checkers.
 - **`helm/`**: Base values and hackathon overlays for PostgreSQL, Temporal, Kafka, etc.
-- **`istio/`**: Configuration documenting the existing Gateway reference andVirtualServices.
 - **`identity/`**: Configurations for Kubernetes service accounts and federated workload identity.
 - **`postgres/`**: Initialization scripts (databases, pgvector, roles) and verification scripts.
 - **`environments/hackathon/`**: Contains target configuration overlays.

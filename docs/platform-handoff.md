@@ -44,30 +44,22 @@ The following core infrastructure services are hosted in the `aiaad-infra` names
 
 ---
 
-## 3. Istio Ingress & Network Egress
+## 3. Network Egress & External Boundaries
 
-The cluster uses an Istio service mesh to govern ingress (inbound) and egress (outbound) traffic.
+Egress traffic is natively permitted (`ALLOW_ANY`) within the cluster network configuration. External service configurations must be injected cleanly.
 
-### 3.1 Ingress Routing
-Do **NOT** deploy new Gateway resources. Use the centralized, approved gateway:
-- **Gateway Reference:** `istio-system/aiaad-gateway`
-- **Application Implementation:** Deploy `VirtualService` manifests in the `aiaad-platform` namespace that map specific HTTP routes (e.g. `prefix: /api`) to your target services. A template is available at `istio/virtualservice.template.yaml`.
-
-### 3.2 Egress & External Boundaries
-Egress traffic is natively permitted (`ALLOW_ANY`). However, any external service configuration must be injected cleanly.
-
-#### Neo4j Aura (External Graph)
+### 3.1 Neo4j Aura (External Graph)
 - **Endpoint Key:** Defined by `neo4jUri` in `environments/*/environment.yaml`
 - **Credentials:** Bound to the `aiaad-neo4j-credentials` Kubernetes secret (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`). Do not hardcode URI in the app.
 
-#### Azure AI Foundry (OpenAI)
+### 3.2 Azure AI Foundry (OpenAI)
 - **Endpoint Key:** Defined by `azureAiFoundryEndpoint` in `environments/*/environment.yaml`
 - **Auth:** Must use **Azure Workload Identity** (federated tokens). Static API keys are explicitly banned. Ensure your Azure Identity SDK (e.g. `DefaultAzureCredential`) is configured to leverage the managed identity.
 
-#### Azure DevOps (ADO)
+### 3.3 Azure DevOps (ADO)
 - **Auth:** Bound to the `aiaad-ado-credentials` Kubernetes secret (`ADO_PAT`). 
 
-#### SharePoint & Microsoft Graph
+### 3.4 SharePoint & Microsoft Graph
 - **Endpoint Key:** Defined by `sharePointTenantUrl` in `environments/*/environment.yaml`.
 
 ---

@@ -76,14 +76,6 @@ if ($minioSsOk -or $minioDepOk) {
     Add-Check "ObjectStorage" "SKIPPED" "Minio optional component not installed."
 }
 
-# 6. Istio Routing
-$null = kubectl get virtualservice aiaad-platform-routing -n aiaad-platform 2>$null
-if ($LASTEXITCODE -eq 0) {
-    Add-Check "IstioRouting" "PASS" "Platform routing virtualservice exists."
-} else {
-    Add-Check "IstioRouting" "FAIL" "Platform routing virtualservice missing."
-}
-
 # 7. External Connectivity
 $TestPod = "smoke-curl-$PID"
 $null = kubectl run $TestPod -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 2>$null

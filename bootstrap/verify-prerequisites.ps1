@@ -53,23 +53,7 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
-# 4. Check for existing Gateway/Istio installation
-Write-Host "Checking for existing Istio installation..."
-$gatewayValuesFile = Join-Path $RepoRoot "environments\hackathon\gateway-values.yaml"
-$gwContent = Get-Content $gatewayValuesFile -Raw
-$gwName = "aiaad-gateway"
-$gwNamespace = "istio-system"
-if ($gwContent -match 'name:\s*"([^"]*)"' -or $gwContent -match "name:\s*([^\s#]+)") { $gwName = $Matches[1].Trim() }
-if ($gwContent -match 'namespace:\s*"([^"]*)"' -or $gwContent -match "namespace:\s*([^\s#]+)") { $gwNamespace = $Matches[1].Trim() }
-
-try {
-    $null = kubectl get gateway -n $gwNamespace $gwName -o name 2>$null
-    Write-Host "  - Existing Gateway $gwNamespace/$gwName found."
-} catch {
-    Write-Warning "Could not find Gateway $gwNamespace/$gwName in the cluster. It must be pre-provisioned."
-}
-
-# 5. Check storage class configuration
+# 4. Check storage class configuration
 Write-Host "Checking storage class availability..."
 $storageContent = Get-Content $storageFile -Raw
 $storageClass = "managed-csi"

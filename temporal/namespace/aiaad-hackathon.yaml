@@ -5,4 +5,3 @@ metadata:
   labels:
     project: aiaad-platform
     environment: hackathon
-    istio-injection: enabled

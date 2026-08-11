@@ -8,13 +8,16 @@ metadata:
 kubernetes:
   # The target context that the bootstrap script must use/verify.
   # Replace with the actual target context (e.g. brave-lion-admin or phoenix)
-  targetContext: "docker-desktop"
+  targetContext: "brave-lion"
 
 azure:
-  # TODO: Subscription/Tenant details for workload identity correlation (non-secret placeholders)
+  # Subscription/Tenant details for workload identity correlation
   subscriptionId: "00000000-0000-0000-0000-000000000000"
   tenantId: "00000000-0000-0000-0000-000000000000"
-  resourceGroup: "rg-aiaad-hackathon"
+  resourceGroup: "rg-hackathon"
+  keyVaultName: "kv-jbluejipmztn4"
+  storageAccountName: "stjbluejipmztn4"
+  workloadIdentityName: "id-workload-brave-lion"
 
 externalServices:
   # Managed service endpoints (non-secret DNS / configuration paths)

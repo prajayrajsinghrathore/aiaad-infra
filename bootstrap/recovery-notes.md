@@ -15,7 +15,6 @@ They intentionally **do not** interact with the Azure or Neo4j control planes. T
 - Neo4j Aura databases and data
 - Azure DevOps configurations
 - SharePoint document libraries
-- Istio Ingress Gateway (`istio-system` namespace)
 
 ## Full Recovery Protocol
 In the event of a total cluster teardown using the `-Force` flag, the environment can be fully recovered by returning to the deterministic bootstrap scripts:

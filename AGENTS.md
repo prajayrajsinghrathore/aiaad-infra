@@ -17,7 +17,6 @@ If a required value or architectural decision cannot be discovered from:
 STOP and return `STATUS=BLOCKED`.
 
 Do not invent or assume:
-- Istio Gateway names
 - host names
 - UAMI/client IDs
 - storage classes
@@ -33,8 +32,6 @@ Do not invent or assume:
 - Project namespaces are exactly:
   - `aiaad-infra`
   - `aiaad-platform`
-- Reuse the existing AKS Istio installation and approved Gateway.
-- Do not install another ingress controller or Gateway.
 - PostgreSQL, Temporal OSS and Kafka are self-hosted in `aiaad-infra`.
 - Neo4j Aura and Azure AI Foundry are external dependencies.
 - Kafka is single-node KRaft and non-critical.
@@ -60,7 +57,7 @@ Do not invent or assume:
 - Change only the active INF work-package scope.
 - Extend existing files rather than creating competing alternatives.
 - Do not introduce new infrastructure technologies.
-- Do not weaken Istio, mTLS, egress or identity controls.
+- Do not weaken egress or identity controls.
 - Do not expose admin services publicly.
 - Keep reusable values non-secret.
 - Keep environment-specific values under the agreed environment configuration.

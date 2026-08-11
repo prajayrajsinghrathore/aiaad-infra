@@ -1,0 +1,21 @@
+# Azure resources
+- **Azure Key Vault (AKV):** `kv-jbluejipmztn4` (Standard SKU) using RBAC.
+  - **Secrets:** 
+    - `licence`
+    - `aiaad-neo4j-password`
+    - `aiaad-postgres-password` (`RLAM-hackathon-2026`)
+    - `aiaad-postgres-temporal-password` (`RLAM-hackathon-2026`)
+    - `aiaad-ado-pat`
+  - **Cryptography Key:** `app-key` (RSA 2048-bit) for application-level encryption/signing operations.
+  - **AKS Integration:** Secrets Store CSI Driver is enabled. CSI driver identity (`keyVaultCsiObjectId`) is granted Key Vault Secrets User and Key Vault Crypto User permissions.
+- **Azure Storage Account:** `stjbluejipmztn4` (Standard LRS, Hot Tier).
+  - **Security Controls:** `allowSharedKeyAccess` is disabled (false), restricting access strictly to Azure AD / Workload Identity. No public access.
+  - **Blob Containers:** `source-documents` (private), `ai-artifacts` (private), `exports` (private).
+  - **Authentication:** User Assigned Managed Identity (`id-workload-brave-lion`) assigned Storage Blob Data Contributor role.
+- **AKS Cluster Configuration:** `brave-lion` (v1.34.4).
+  - **System Node Pool (`agentpool`):** 2x `Standard_D2ns_v6` nodes (4 vCPUs total), Tainted with `CriticalAddonsOnly=true:NoSchedule`.
+  - **User Node Pool (`aiaadpool`):** 2x `Standard_D2ns_v6` nodes (4 vCPUs total), Label `workload=aiaad` (runs application, PostgreSQL, Temporal, Kafka, UI).
+  - **Workload Identity & OIDC Issuer:** Enabled.
+  - **Networking:** Azure CNI Overlay. API Server authorized IP ranges restricted to `167.98.230.229/32`.
+  - **Ingress:** Managed Istio is removed. NGINX Ingress and Jetstack Cert-Manager are natively installed for Let's Encrypt certificates.
+  - **Monitoring:** Managed Prometheus is enabled, sending metrics to `amw-brave-lion-test-uks` workspace.

@@ -52,22 +52,7 @@ if ! kubectl cluster-info &>/dev/null; then
     exit 1
 fi
 
-# 4. Check for existing Gateway/Istio installation
-echo "Checking for existing Istio installation..."
-gatewayValuesFile="${REPO_ROOT}/environments/hackathon/gateway-values.yaml"
-gwName=$(grep -E '^\s*name:' "$gatewayValuesFile" | awk -F '"' '{print $2}' || true)
-gwNamespace=$(grep -E '^\s*namespace:' "$gatewayValuesFile" | awk -F '"' '{print $2}' || true)
-
-if [ -z "$gwName" ]; then gwName=$(grep -E '^\s*name:' "$gatewayValuesFile" | awk '{print $2}' || true); fi
-if [ -z "$gwNamespace" ]; then gwNamespace=$(grep -E '^\s*namespace:' "$gatewayValuesFile" | awk '{print $2}' || true); fi
-
-if kubectl get gateway -n "$gwNamespace" "$gwName" &>/dev/null; then
-    echo "  - Existing Gateway $gwNamespace/$gwName found."
-else
-    echo "WARNING: Could not find Gateway $gwNamespace/$gwName in the cluster."
-fi
-
-# 5. Check storage class configuration
+# 4. Check storage class configuration
 echo "Checking storage class availability..."
 storageClass=$(grep -E '^\s*storageClass:' "$storageFile" | awk -F '"' '{print $2}' || true)
 if [ -z "$storageClass" ]; then

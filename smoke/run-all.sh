@@ -68,13 +68,6 @@ else
   check_status "ObjectStorage" "SKIPPED" "Minio optional component not installed."
 fi
 
-# 6. Istio Routing
-if kubectl get virtualservice aiaad-platform-routing -n aiaad-platform >/dev/null 2>&1; then
-  check_status "IstioRouting" "PASS" "Platform routing virtualservice exists."
-else
-  check_status "IstioRouting" "FAIL" "Platform routing virtualservice missing."
-fi
-
 # 7. External Connectivity (Neo4j, Foundry)
 TEST_POD="smoke-curl-$$"
 if kubectl run $TEST_POD -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 >/dev/null 2>&1; then

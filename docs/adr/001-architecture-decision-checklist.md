@@ -4,7 +4,7 @@ This checklist must be reviewed before making any architectural additions or edi
 
 ## Pre-Implementation Verification
 - [ ] Read `AGENTS.md` and the relevant `.ai/skills/*.md` files.
-- [ ] Inspect existing resources in the target environment (e.g. Istio Gateway, Storage classes) to avoid resource recreation or conflicts.
+- [ ] Inspect existing resources in the target environment (e.g. Storage classes) to avoid resource recreation or conflicts.
 - [ ] Ensure that no new infrastructure tools (e.g. database engines, ingress controllers) are introduced without explicit architecture approval.
 - [ ] Verify that no secrets, tokens, or credentials are hardcoded or committed.
 
