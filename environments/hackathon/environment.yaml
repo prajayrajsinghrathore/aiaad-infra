@@ -25,3 +25,4 @@ externalServices:
   neo4jUri: "bolt+routing://neo4j-aura-placeholder:7687"
   openAiApiEndpoint: "https://api.openai.com"
   sharePointTenantUrl: "https://placeholder.sharepoint.com"
+  adoUrl: "https://dev.azure.com/prajayrajrathore/AI%20Assisted%20Agile%20Delivery/"
