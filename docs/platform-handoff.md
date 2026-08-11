@@ -54,7 +54,7 @@ Egress traffic is natively permitted (`ALLOW_ANY`) within the cluster network co
 
 ### 3.2 OpenAI API
 - **Endpoint Key:** Defined by `openAiApiEndpoint` in `environments/*/environment.yaml`
-- **Auth:** Connection is established via the configured OpenAI service account credentials. Ensure proper integration with the application secrets.
+- **Auth:** Connection is authenticated via the OpenAI service account key, mapped to the Kubernetes secret `openai-service-account` from Azure Key Vault. Ensure proper secret mapping is established for pods.
 
 ### 3.3 Azure DevOps (ADO)
 - **Auth:** Bound to the `aiaad-ado-credentials` Kubernetes secret (`ADO_PAT`). 

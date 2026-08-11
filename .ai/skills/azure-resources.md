@@ -6,6 +6,7 @@
     - `aiaad-postgres-password` (`RLAM-hackathon-2026`)
     - `aiaad-postgres-temporal-password` (`RLAM-hackathon-2026`)
     - `aiaad-ado-pat`
+    - `openai-service-account`
   - **Cryptography Key:** `app-key` (RSA 2048-bit) for application-level encryption/signing operations.
   - **AKS Integration:** Secrets Store CSI Driver is enabled. CSI driver identity (`keyVaultCsiObjectId`) is granted Key Vault Secrets User and Key Vault Crypto User permissions.
 - **Azure Storage Account:** `stjbluejipmztn4` (Standard LRS, Hot Tier).
