@@ -3,8 +3,8 @@
 This file tracks pending tasks and deferred configurations for the infrastructure repository.
 
 ## Azure Environment Configuration
-- [ ] Update Azure Subscription ID across configuration files.
-- [ ] Update Azure Tenant ID across configuration files.
+- [x] Update Azure Subscription ID across configuration files.
+- [x] Update Azure Tenant ID across configuration files.
 - [ ] Connect to Azure Storage Account for production/remote object storage (deferred from INF-10, currently using local MinIO).
 - [ ] Configure Workload Identity (UAMI) / Federated identity for AKS.
 

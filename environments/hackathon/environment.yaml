@@ -12,8 +12,8 @@ kubernetes:
 
 azure:
   # Subscription/Tenant details for workload identity correlation
-  subscriptionId: "00000000-0000-0000-0000-000000000000"
-  tenantId: "00000000-0000-0000-0000-000000000000"
+  subscriptionId: "3e3fadd8-a910-430e-840b-79ff38a7eb49"
+  tenantId: "821e7efe-4ccd-4c7f-a717-31bd85305b4e"
   resourceGroup: "rg-hackathon"
   keyVaultName: "kv-jbluejipmztn4"
   storageAccountName: "stjbluejipmztn4"
