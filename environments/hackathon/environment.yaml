@@ -18,6 +18,7 @@ azure:
   keyVaultName: "kv-jbluejipmztn4"
   storageAccountName: "stjbluejipmztn4"
   workloadIdentityName: "id-workload-brave-lion"
+  workloadIdentityClientId: "704c6f12-edb0-4ac5-93ae-c025a402e096"
 
 externalServices:
   # Managed service endpoints (non-secret DNS / configuration paths)

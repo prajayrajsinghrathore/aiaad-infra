@@ -17,6 +17,7 @@ echo ""
 echo "[STEP 2/7] Applying Kubernetes Namespaces..."
 kubectl apply -f "${REPO_ROOT}/namespaces/aiaad-infra.yaml"
 kubectl apply -f "${REPO_ROOT}/namespaces/aiaad-platform.yaml"
+kubectl apply -f "${REPO_ROOT}/namespaces/aiaad-platform-sa.yaml"
 
 echo ""
 echo "[STEP 3/7] Deploying Required Component: PostgreSQL..."

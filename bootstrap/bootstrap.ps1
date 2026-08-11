@@ -13,6 +13,7 @@ Write-Host "`n[STEP 1/7] Running prerequisite validation..."
 Write-Host "`n[STEP 2/7] Applying Kubernetes Namespaces..."
 kubectl apply -f "$RepoRoot\namespaces\aiaad-infra.yaml"
 kubectl apply -f "$RepoRoot\namespaces\aiaad-platform.yaml"
+kubectl apply -f "$RepoRoot\namespaces\aiaad-platform-sa.yaml"
 
 Write-Host "`n[STEP 3/7] Deploying Required Component: PostgreSQL..."
 & "$ScriptDir\deploy-postgres.ps1"

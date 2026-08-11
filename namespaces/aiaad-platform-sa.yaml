@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aiaad-platform-sa
+  namespace: aiaad-platform
+  annotations:
+    azure.workload.identity/client-id: "704c6f12-edb0-4ac5-93ae-c025a402e096"
+    azure.workload.identity/tenant-id: "821e7efe-4ccd-4c7f-a717-31bd85305b4e"
