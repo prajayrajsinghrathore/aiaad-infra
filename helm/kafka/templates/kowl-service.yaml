@@ -1,0 +1,18 @@
+{{- if .Values.kowl.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: aiaad-kowl
+  labels:
+    app.kubernetes.io/name: kowl
+    app.kubernetes.io/instance: aiaad-kowl
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: kowl
+    app.kubernetes.io/instance: aiaad-kowl
+{{- end }}

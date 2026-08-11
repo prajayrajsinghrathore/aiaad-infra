@@ -1,0 +1,23 @@
+# environments/hackathon/environment.yaml
+# Non-secret environment-wide configuration values
+
+metadata:
+  environment: hackathon
+  project: aiaad
+
+kubernetes:
+  # The target context that the bootstrap script must use/verify.
+  # Replace with the actual target context (e.g. brave-lion-admin or phoenix)
+  targetContext: "docker-desktop"
+
+azure:
+  # TODO: Subscription/Tenant details for workload identity correlation (non-secret placeholders)
+  subscriptionId: "00000000-0000-0000-0000-000000000000"
+  tenantId: "00000000-0000-0000-0000-000000000000"
+  resourceGroup: "rg-aiaad-hackathon"
+
+externalServices:
+  # Managed service endpoints (non-secret DNS / configuration paths)
+  neo4jUri: "bolt+routing://neo4j-aura-placeholder:7687"
+  azureAiFoundryEndpoint: "https://aiaad-foundry-placeholder.openai.azure.com/"
+  sharePointTenantUrl: "https://placeholder.sharepoint.com"

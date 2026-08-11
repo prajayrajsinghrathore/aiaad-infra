@@ -1,0 +1,23 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: aiaad-worker-scaler
+  namespace: aiaad-platform
+  # NOTE: Do NOT apply this manifest directly without completing the Activation Checklist
+  # in keda/README.md. Premature activation could unexpectedly scale application workers.
+spec:
+  # The target workload to scale. Must be deployed before activating this ScaledObject.
+  scaleTargetRef:
+    name: YOUR_WORKER_DEPLOYMENT_NAME
+    kind: Deployment
+  # IMPORTANT: Set limits explicitly.
+  minReplicaCount: 1
+  maxReplicaCount: 5 # EXTREME CAUTION: High max replicas scaling off Kafka lag can overwhelm Azure AI Foundry quotas.
+  triggers:
+  - type: kafka
+    metadata:
+      bootstrapServers: aiaad-kafka.aiaad-infra.svc.cluster.local:9092
+      consumerGroup: YOUR_CONSUMER_GROUP_ID
+      topic: platform.domain.events # Change to appropriate topic (e.g. platform.integration.events)
+      lagThreshold: "10" # Scale up when consumer lag exceeds this threshold
+      offsetResetPolicy: latest

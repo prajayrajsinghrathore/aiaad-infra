@@ -1,0 +1,2 @@
+\c aiaad
+CREATE EXTENSION IF NOT EXISTS vector;

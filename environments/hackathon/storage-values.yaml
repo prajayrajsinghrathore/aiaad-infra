@@ -1,0 +1,17 @@
+# environments/hackathon/storage-values.yaml
+# Storage values defining storage classes and volume provisioning options.
+
+storage:
+  # The storage class to use for self-hosted persistent workloads (PostgreSQL, Kafka, Temporal)
+  # For AKS, this is typically default, managed-csi, or azurefile-csi.
+  storageClass: "standard"
+  
+  # Persistent volume size definitions for hackathon
+  postgres:
+    storageSize: 10Gi
+  temporal:
+    storageSize: 5Gi
+  kafka:
+    storageSize: 10Gi
+  minio:
+    storageSize: 5Gi

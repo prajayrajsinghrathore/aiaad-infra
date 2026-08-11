@@ -1,0 +1,12 @@
+# helm/postgres/values.hackathon.yaml
+# Hackathon-specific overrides for PostgreSQL
+
+# Smaller resources for local hackathon
+primary:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

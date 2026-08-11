@@ -1,0 +1,3 @@
+# NO_CHANGE: Project-scoped egress configuration is not required.
+# Verification confirms that egress traffic from the 'aiaad-platform' namespace is natively permitted.
+# Istio outbound traffic policy defaults to ALLOW_ANY and no restricting network/mesh policies are in place.

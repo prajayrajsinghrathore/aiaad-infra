@@ -1,0 +1,31 @@
+server:
+
+  config:
+    persistence:
+      defaultStore: default
+      visibilityStore: visibility
+      datastores:
+        default:
+          sql:
+            pluginName: "postgres12"
+            databaseName: "temporal"
+            connectAddr: "aiaad-postgres-postgresql.aiaad-infra.svc.cluster.local:5432"
+            connectProtocol: "tcp"
+            user: "temporal_app"
+            password: "temporal_app_password"
+            maxConns: 20
+            maxConnLifetime: "1h"
+            createDatabase: false
+            manageSchema: true
+        visibility:
+          sql:
+            pluginName: "postgres12"
+            databaseName: "temporal_visibility"
+            connectAddr: "aiaad-postgres-postgresql.aiaad-infra.svc.cluster.local:5432"
+            connectProtocol: "tcp"
+            user: "temporal_app"
+            password: "temporal_app_password"
+            maxConns: 20
+            maxConnLifetime: "1h"
+            createDatabase: false
+            manageSchema: true

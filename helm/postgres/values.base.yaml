@@ -1,0 +1,29 @@
+# helm/postgres/values.base.yaml
+# Base values for bitnami/postgresql deployment
+
+auth:
+  enablePostgresUser: true
+  postgresPassword: "postgres_admin_password" # In production, use external secret
+
+primary:
+  initdb:
+    scriptsConfigMap: aiaad-postgres-init-scripts
+  persistence:
+    enabled: true
+    # storageClass and size injected via environment
+  resources:
+    requests:
+      cpu: 250m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+
+image:
+  # Using bitnami/postgresql image which might support pgvector via an extension if available,
+  # or fallback to just basic postgres. 
+  # Actually, Bitnami provides a separate pgvector image.
+  # Let's specify it just in case, but first we can rely on default if needed.
+  registry: docker.io
+  repository: bitnami/postgresql
+  # version is pinned in the script

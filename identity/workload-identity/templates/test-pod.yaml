@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: identity-test-pod
+  namespace: aiaad-infra
+  labels:
+    azure.workload.identity/use: "true"
+spec:
+  serviceAccountName: identity-test-sa
+  containers:
+    - name: identity-test-container
+      image: mcr.microsoft.com/azure-cli:latest
+      command: ["sleep", "3600"]

@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: aiaad-platform-routing
+  namespace: aiaad-platform
+spec:
+  hosts:
+  - "hackathon.aiaad.org"
+  gateways:
+  - "istio-system/aiaad-gateway"
+  http:
+  - match:
+    - uri:
+        prefix: /api
+    route:
+    - destination:
+        host: placeholder-service.aiaad-platform.svc.cluster.local
+        port:
+          number: 80
+

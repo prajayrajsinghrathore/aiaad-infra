@@ -1,0 +1,1414 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>aiaad-infra — Step-by-Step Infrastructure Execution Playbook</title>
+<style>
+:root{--bg:#f4f7fb;--paper:#fff;--ink:#172033;--muted:#637083;--line:#d9e1ea;--navy:#102b46;--blue:#2358c7;--green:#0f766e;--amber:#9a6700;--red:#b42318;--soft:#edf3ff;--softg:#ecfdf5;--softa:#fff8e8;--code:#0f172a}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.62 Inter,Segoe UI,Arial,sans-serif}
+header{padding:54px 6vw 44px;background:linear-gradient(128deg,#0d2238,#163c5a 64%,#155e75);color:white}header h1{font-size:39px;line-height:1.14;max-width:1100px;margin:10px 0 12px}header p{font-size:18px;color:#d8e6f2;max-width:1100px}.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:12px;opacity:.8}.meta{display:flex;gap:18px;flex-wrap:wrap;font-size:13px;color:#c6d8e8;margin-top:22px}
+.wrap{max-width:1480px;margin:auto;padding:0 24px}.layout{display:grid;grid-template-columns:310px minmax(0,1fr);gap:28px;margin:28px auto 70px;align-items:start}nav{position:sticky;top:18px;background:white;border:1px solid var(--line);border-radius:14px;padding:18px;max-height:calc(100vh - 36px);overflow:auto}nav h2{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px}nav a{display:block;color:#364152;padding:4px 5px;border-radius:6px;text-decoration:none;font-size:13px}nav a:hover{background:var(--soft)}
+main{min-width:0}section{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:30px 34px;margin-bottom:24px}h2{font-size:28px;line-height:1.25;color:var(--navy);margin:0 0 16px}h3{font-size:21px;color:#193a57;margin:28px 0 10px}h4{font-size:16px;color:#25455f;margin:20px 0 7px}p{margin:8px 0 13px}ul,ol{padding-left:24px}li{margin:5px 0}.small{font-size:13px;color:var(--muted)}
+.callout{border-left:5px solid var(--blue);background:var(--soft);padding:14px 16px;border-radius:8px;margin:16px 0}.green{border-color:var(--green);background:var(--softg)}.amber{border-color:var(--amber);background:var(--softa)}.red{border-color:var(--red);background:#fff2f1}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.card{border:1px solid var(--line);border-radius:12px;background:#fbfcfe;padding:16px}.card h4{margin-top:0}
+table{width:100%;border-collapse:collapse;margin:14px 0 20px;font-size:13px}th,td{border:1px solid var(--line);padding:9px 10px;vertical-align:top;text-align:left}th{background:#eef3f8;color:#20364d;position:sticky;top:0}tr:nth-child(even) td{background:#fbfcfe}.tablewrap{overflow:auto;max-height:820px;border:1px solid var(--line);border-radius:10px}.tablewrap table{margin:0;border:0}
+pre{background:var(--code);color:#dbe6f3;border-radius:10px;padding:16px;overflow:auto;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#edf1f5;border-radius:4px;padding:1px 5px}pre code{background:transparent;padding:0}
+details.prompt{border:1px solid var(--line);border-radius:10px;margin:12px 0;background:#fbfcfe}details.prompt>summary{cursor:pointer;padding:12px 14px;font-weight:600;color:#193a57}details.prompt[open]>summary{border-bottom:1px solid var(--line)}details.prompt pre{margin:0;border-radius:0 0 10px 10px}
+.check{list-style:none;padding:0}.check li:before{content:"☐";color:var(--blue);margin-right:9px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:0 20px 40px}
+@media(max-width:1000px){.layout{grid-template-columns:1fr}nav{position:relative;max-height:none;top:auto}.grid2,.grid3{grid-template-columns:1fr}header h1{font-size:31px}}
+@media print{body{background:white;font-size:10.5pt}.layout{display:block}nav{display:none}section{border:0;padding:0;margin:0 0 22px}.tablewrap{max-height:none;overflow:visible;border:0}th{position:static}header{background:white!important;color:#000;border-bottom:2px solid #222;padding:28px}header p,.meta{color:#333}pre{white-space:pre-wrap;word-break:break-word}h2,h3{break-after:avoid}}
+</style>
+</head>
+<body>
+<header>
+<div class="eyebrow">Agent-Executable Infrastructure Handbook</div>
+<h1>aiaad-infra — Step-by-Step Infrastructure Execution Playbook</h1>
+<p>A dedicated infrastructure-only plan for establishing the AI-Assisted Agile Delivery Platform runtime in AKS. The repository structure already exists; this document starts by validating it, then brings up namespaces, identity integration, PostgreSQL/pgvector, Temporal, Kafka, storage, Istio integration, external dependencies, observability, smoke tests and operational readiness one dependency-safe step at a time.</p>
+<div class="meta"><span>Repo: aiaad-infra</span><span>Infra namespace: aiaad-infra</span><span>App namespace: aiaad-platform</span><span>Ingress: existing AKS Istio Gateway</span></div>
+</header>
+<div class="wrap layout">
+<nav>
+<h2>Contents</h2>
+<a href="#purpose">1. How to execute</a>
+<a href="#scope">2. Infra scope</a>
+<a href="#state">3. Current starting point</a>
+<a href="#structure">4. Expected repo structure</a>
+<a href="#decisions">5. Stamped infra decisions</a>
+<a href="#skills">6. Agent skill files</a>
+<a href="#agent-protocol">7. Agent execution protocol</a>
+<a href="#dependencies">8. Dependency graph</a>
+<a href="#components">9. Component naming</a>
+<a href="#namespaces">10. Namespaces & Istio</a>
+<a href="#database">11. Database plan</a>
+<a href="#external">12. External dependencies</a>
+<a href="#sequence">13. Infra work-package sequence</a>
+<a href="#prompts">14. Copy/paste agent prompts</a>
+<a href="#roles">15. Human review roles</a>
+<a href="#smoke">16. Readiness & failure model</a>
+<a href="#handoff">17. Platform handoff contract</a>
+<a href="#done">18. Final Definition of Done</a>
+</nav>
+<main>
+
+<section id="purpose">
+<h2>1. How to execute this playbook</h2>
+<p>Run the work packages in dependency-ready order. For each READY work package, create a short branch/worktree, paste its prompt into the coding agent from the <code>aiaad-infra</code> repository root, review the result, run the stated verification, merge to <code>main</code>, then unblock dependent work packages.</p>
+<div class="callout green"><strong>Key rule:</strong> the agent must inspect the existing repository and AKS environment before making changes. Missing gateway names, UAMI references, storage classes, chart versions or organisational security conventions are BLOCKERS—not opportunities to invent defaults.</div>
+<pre>READY INF work package
+      ↓
+feat/INF-XX-slug branch/worktree
+      ↓
+paste prompt
+      ↓
+agent reads AGENTS.md + named skills
+      ↓
+inspect existing repo + cluster
+      ↓
+BLOCKED if required fact is unknown
+      OR
+bounded implementation
+      ↓
+verification / smoke
+      ↓
+senior human review
+      ↓
+merge main
+      ↓
+next INF work packages become READY</pre>
+</section>
+
+<section id="scope">
+<h2>2. Infrastructure scope</h2>
+<div class="grid2">
+<div class="card"><h4>aiaad-infra owns</h4><ul>
+<li>Project Kubernetes namespaces and namespace-level configuration.</li>
+<li>Self-hosted PostgreSQL + pgvector foundation.</li>
+<li>Self-hosted Temporal OSS + Temporal UI/admin access.</li>
+<li>Self-hosted one-node Kafka KRaft + topic bootstrap.</li>
+<li>Optional Redis and optional AKS MinIO only when explicitly selected.</li>
+<li>Existing-Istio-Gateway integration resources and egress configuration when required.</li>
+<li>Workload-identity/service-account templates and environment references.</li>
+<li>Infra smoke tests, diagnostics, bootstrap, reset and runbooks.</li>
+<li>Connectivity validation for Neo4j Aura, Foundry, ADO and Graph/SharePoint.</li>
+</ul></div>
+<div class="card"><h4>aiaad-infra does not own</h4><ul>
+<li>Microservice source code.</li>
+<li>Business database migrations/schema evolution.</li>
+<li>Application Temporal workflows.</li>
+<li>Application outbox/consumer implementations.</li>
+<li>Neo4j application graph schema/projector logic.</li>
+<li>LLM prompts/capabilities or evaluation datasets.</li>
+<li>ADO or SharePoint connector business logic.</li>
+<li>Application service Helm values.</li>
+</ul></div>
+</div>
+</section>
+
+<section id="state">
+<h2>3. Current starting point</h2>
+<p>The <code>aiaad-infra</code> repository structure has already been created. Therefore <strong>INF-00 validates and completes the existing structure; it must not replace/reorganise the repository simply to match an agent's preferred layout.</strong></p>
+<div class="callout amber"><strong>Important:</strong> where the existing repo uses a sensible equivalent folder/name, preserve it unless it violates a stamped convention. The purpose of the playbook is deterministic infrastructure, not cosmetic refactoring.</div>
+</section>
+
+<section id="structure">
+<h2>4. Expected infrastructure repository structure</h2>
+<pre>aiaad-infra/
+├─ README.md
+├─ AGENTS.md
+├─ .ai/
+│  └─ skills/
+├─ namespaces/
+├─ bootstrap/
+├─ helm/
+│  ├─ postgres/
+│  ├─ temporal/
+│  ├─ kafka/
+│  ├─ redis/               # optional
+│  ├─ minio/               # optional in AKS
+│  ├─ pgadmin/             # optional admin
+│  ├─ kafka-ui/            # optional admin
+│  └─ redisinsight/        # optional admin
+├─ istio/
+│  ├─ gateway-reference.yaml
+│  ├─ virtualservice.template.yaml
+│  └─ egress/
+├─ identity/
+├─ postgres/
+│  ├─ init/
+│  └─ verify/
+├─ temporal/
+│  ├─ namespace/
+│  ├─ smoke/
+│  └─ runbooks/
+├─ kafka/
+│  ├─ topics/
+│  ├─ smoke/
+│  └─ runbooks/
+├─ keda/
+├─ environments/
+│  └─ hackathon/
+├─ admin/
+│  ├─ port-forward/
+│  └─ diagnostics/
+├─ smoke/
+└─ docs/
+   ├─ deployment-order.md
+   ├─ platform-handoff.md
+   ├─ runbooks/
+   ├─ troubleshooting/
+   └─ adr/</pre>
+</section>
+
+<section id="decisions">
+<h2>5. Stamped infrastructure decisions</h2>
+<table>
+<tr><th>Concern</th><th>Decision</th></tr>
+<tr><td>AKS namespaces</td><td><code>aiaad-platform</code> for apps/workers; <code>aiaad-infra</code> for self-hosted infrastructure.</td></tr>
+<tr><td>Ingress/service mesh</td><td>Reuse existing AKS Istio and existing approved Gateway. No second ingress stack.</td></tr>
+<tr><td>PostgreSQL</td><td>Self-hosted in <code>aiaad-infra</code>; DBs <code>aiaad</code>, <code>temporal</code>, <code>temporal_visibility</code>.</td></tr>
+<tr><td>Vector store</td><td>pgvector enabled in <code>aiaad</code>.</td></tr>
+<tr><td>Temporal</td><td>Temporal OSS self-hosted; modest non-HA hackathon deployment; Temporal namespace <code>aiaad-hackathon</code>.</td></tr>
+<tr><td>Kafka</td><td>Self-hosted one-node KRaft, broker+controller, replication factor 1, non-critical.</td></tr>
+<tr><td>Neo4j</td><td>AuraDB Free/Trial external dependency; not self-hosted in AKS.</td></tr>
+<tr><td>AI provider</td><td>Azure AI Foundry/OpenAI external dependency.</td></tr>
+<tr><td>Object storage</td><td>Prefer Azure Blob in AKS; MinIO for local, and AKS only if explicitly selected.</td></tr>
+<tr><td>Redis</td><td>Optional; install only for a named consumer/use case.</td></tr>
+<tr><td>Azure identity</td><td>UAMI + federated workload identity according to existing organisational AKS pattern.</td></tr>
+<tr><td>ADO</td><td>External; PAT used by connector later, never stored in infra repo.</td></tr>
+<tr><td>SharePoint</td><td>External; Entra/Microsoft Graph path validated here, connector implemented elsewhere.</td></tr>
+<tr><td>IaC</td><td>No Terraform/Bicep. Use deterministic Helm/kubectl bootstrap scripts and versioned values.</td></tr>
+</table>
+</section>
+
+<section id="skills">
+<h2>6. Agent skill files</h2>
+<p>Put these compact files under <code>.ai/skills/</code>. Work-package prompts reference only the skills they need, saving tokens while keeping agents inside the architecture.</p>
+<h3>.ai/skills/infra-architecture.md</h3><pre># Infra architecture
+- Repo is aiaad-infra; application code belongs in aiaad-platform.
+- Exactly two project namespaces: aiaad-infra and aiaad-platform.
+- PostgreSQL, Temporal OSS and Kafka are self-hosted in aiaad-infra.
+- PostgreSQL is the shared physical DB server for hackathon; databases: aiaad, temporal, temporal_visibility.
+- pgvector is enabled in aiaad.
+- Kafka is one-node KRaft, non-production and non-critical.
+- Temporal is the durable-workflow engine; Kafka is event distribution, not workflow orchestration.
+- Neo4j Aura and Azure AI Foundry/OpenAI are external managed dependencies, not AKS workloads.
+- Redis is optional and should not be installed without a named consumer.
+- Prefer Azure Blob in AKS; MinIO is local unless explicitly selected for AKS.
+- Do not introduce additional infrastructure without an explicit architecture decision.</pre>
+<h3>.ai/skills/naming.md</h3><pre># Naming
+Namespaces: aiaad-infra, aiaad-platform.
+Helm releases: aiaad-postgres, aiaad-temporal, aiaad-kafka, optional aiaad-redis/aiaad-minio/aiaad-pgadmin/aiaad-kafka-ui/aiaad-redisinsight.
+Application database: aiaad. Temporal databases: temporal, temporal_visibility.
+Temporal namespace: aiaad-hackathon.
+Kafka topics: platform.domain.events, platform.integration.events, platform.dlq.
+Use lowercase kebab-case for Kubernetes resources and Helm releases.
+Environment values live under environments/hackathon; do not hard-code target-specific gateway/host/UAMI IDs in reusable templates.</pre>
+<h3>.ai/skills/k8s-istio.md</h3><pre># Kubernetes and Istio
+- Reuse the existing AKS Istio installation and existing approved Gateway.
+- Do not install NGINX, Traefik, another Istio control plane, or another Gateway unless explicitly directed by the cluster owner.
+- Use ClusterIP for project services.
+- Public/user routing is created by project-owned VirtualService resources referencing the existing gatewayRef.
+- Admin UIs use port-forward or an already-approved internal-only route; they are not public.
+- Inspect and follow the cluster&#x27;s actual sidecar/ambient, mTLS, egress and namespace-label conventions. Do not guess them.
+- If external egress is restricted, add the smallest required project-scoped egress config for approved endpoints; never wildcard allow all.</pre>
+<h3>.ai/skills/identity-secrets.md</h3><pre># Identity and secrets
+- AKS Azure access uses the organisation&#x27;s UAMI + federated workload-identity pattern.
+- Infrastructure templates reference approved identity IDs/client IDs supplied externally; do not create/guess them.
+- Respect existing ESI/CSO secret/identity integration used by the cluster.
+- Never commit PATs, passwords, Neo4j credentials, tokens, client secrets or Kubernetes Secret values.
+- ADO PAT is injected only where needed later by the ADO connector/diagnostic.
+- Prefer workload identity for Azure Blob and Foundry/OpenAI.
+- Secrets/config are injected through the approved environment/deployment mechanism; example files contain placeholders only.
+- Never print secret values in smoke-test output or logs.</pre>
+<h3>.ai/skills/postgres.md</h3><pre># PostgreSQL
+- Self-hosted in aiaad-infra, one physical cluster for hackathon.
+- Required DBs: aiaad, temporal, temporal_visibility.
+- Enable pgvector only in aiaad unless a concrete need says otherwise.
+- Service-owned business schemas/migrations live in aiaad-platform, not infra.
+- Infra may bootstrap databases, extensions and database roles/grants.
+- Cross-service SQL access is forbidden even though the physical DB is shared.
+- Use persistent storage and verify pod-restart persistence.
+- Pin the selected Helm chart/image version in repo values; do not silently upgrade.</pre>
+<h3>.ai/skills/temporal.md</h3><pre># Temporal
+- Temporal OSS self-hosted in aiaad-infra.
+- Use PostgreSQL temporal + temporal_visibility.
+- Hackathon deployment is intentionally non-HA/small.
+- Application Temporal namespace: aiaad-hackathon.
+- Temporal UI is admin-only.
+- Infra smoke may use a tiny hello/signal workflow, but application workflows belong in aiaad-platform.
+- Do not add Elasticsearch/Cassandra unless an explicit requirement is approved.
+- Pin chart/image versions and document values.</pre>
+<h3>.ai/skills/kafka.md</h3><pre># Kafka
+- Self-host one KRaft node with combined broker/controller role.
+- Replication factor 1; non-production trial only.
+- Topics: platform.domain.events, platform.integration.events, platform.dlq.
+- Kafka is non-critical: application canonical DB writes must not depend on broker availability.
+- Infra provides broker, topics and smoke/failure diagnostics; application outbox/consumer code belongs in aiaad-platform.
+- Do not introduce ZooKeeper.
+- Pin chart/image versions.</pre>
+<h3>.ai/skills/storage.md</h3><pre># Object storage
+- Local developer environment may use MinIO.
+- AKS deployment should prefer Azure Blob if available/approved.
+- Infra owns environment configuration/connectivity/identity, not application object-store implementation.
+- Use workload identity for Azure Blob.
+- Do not deploy MinIO in AKS unless the team explicitly chooses it because Blob is unavailable or unsuitable.
+- Never place source documents in Git.</pre>
+<h3>.ai/skills/redis.md</h3><pre># Redis
+- Redis is optional.
+- Install only when a concrete approved consumer exists.
+- Suitable uses: short-lived cache, rate-limit/concurrency coordination, transient locks where designed.
+- Do not make canonical business correctness depend on Redis.
+- If omitted, ensure no required app config references it.
+- If installed, keep a small non-HA hackathon deployment and admin access private.</pre>
+<h3>.ai/skills/external-dependencies.md</h3><pre># External dependencies
+External, not self-hosted in aiaad-infra:
+- Neo4j AuraDB Free/Trial.
+- Azure AI Foundry/OpenAI.
+- Azure DevOps.
+- Microsoft Graph/SharePoint.
+Infra validates network/DNS/TLS/identity/config paths only.
+Do not implement application connector/domain logic here.
+If connectivity is blocked by organisational firewall/mesh/permission, return BLOCKED with exact evidence; do not bypass controls.
+Store only non-secret endpoint/config names in Git.</pre>
+<h3>.ai/skills/observability.md</h3><pre># Observability
+- Reuse observability facilities already present in AKS where possible.
+- Do not deploy a competing monitoring stack without explicit approval.
+- Infra diagnostics should report component readiness, restarts, persistence, Kafka availability, Temporal health and external-dependency reachability.
+- Logs must avoid secrets/confidential documents.
+- Prefer one aggregated infra-health command/report for operators.</pre>
+<h3>.ai/skills/keda.md</h3><pre># KEDA
+- KEDA is optional/useful for selected worker scaling.
+- Infra may provide inactive templates before app workers exist.
+- Activate only with an owning service, a real scaler source and explicit min/max replicas.
+- Kafka-lag scaling must not indirectly overwhelm Azure AI Foundry quotas.
+- Do not use KEDA merely because it is installed.</pre>
+<h3>.ai/skills/testing-dod.md</h3><pre># Infra testing and Definition of Done
+- Do not claim DONE without executing the step&#x27;s verification.
+- Scripts/install must be idempotent where practical.
+- Helm values/templates must render successfully before apply.
+- Required components expose healthy/readiness state.
+- Persistent components must survive normal pod restart.
+- Missing required environment inputs -&gt; BLOCKED, never guessed.
+- Optional intentionally omitted components -&gt; SKIPPED, not FAIL.
+- Smoke output must not expose secrets.
+- Report exact commands/tests and exit-criterion evidence.</pre>
+<h3>.ai/skills/git-agent-workflow.md</h3><pre># Git and agent workflow
+- Work from short-lived branches/worktrees: feat/INF-XX-slug.
+- Rebase/merge current main before starting a new agent task.
+- High-blast-radius files require senior review: AGENTS.md, .ai/skills/**, bootstrap/**, environments/**, shared Helm/base values, Istio resources.
+- Keep PRs bounded to one INF work package or one clearly-reviewable subset.
+- Agent must inspect existing repo first and extend it; never recreate the repo or move folders without explicit instruction.</pre>
+<h3>Root AGENTS.md</h3>
+<pre># aiaad-infra agent rules
+
+Before changing anything:
+1. Read this file.
+2. Read only the .ai/skills files named in the active INF work-package prompt.
+3. Inspect the existing repo and target AKS environment before creating resources.
+4. If a required value/convention is not discoverable or supplied, return BLOCKED. Never guess gateway names, UAMI IDs, hosts, storage classes, chart versions or security policy.
+
+Non-negotiable:
+- This repo is infrastructure-only.
+- Exactly two project namespaces: aiaad-infra and aiaad-platform.
+- Reuse existing AKS Istio/Gateway; never deploy another ingress stack.
+- PostgreSQL, Temporal OSS and Kafka are self-hosted in aiaad-infra.
+- Neo4j Aura and Foundry are external.
+- Kafka is one-node KRaft and non-critical.
+- Redis is optional.
+- Prefer Blob in AKS.
+- Follow existing workload-identity/ESI/CSO conventions.
+- Never commit or print secrets.
+
+Implementation:
+- Extend the existing repo; do not recreate/reorganise it without explicit reason.
+- Pin Helm chart/image versions once selected.
+- Keep install/upgrade/bootstrap idempotent.
+- Admin UIs stay private/port-forwarded.
+- Do not implement application/domain code here.
+- Run the work-package verification before claiming DONE.
+
+Completion response:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre>
+</section>
+
+<section id="agent-protocol">
+<h2>7. Common agent execution protocol</h2>
+<pre>Before implementation
+─────────────────────
+Read AGENTS.md + named skills.
+Inspect current repo status/tree and target cluster.
+Verify prerequisite INF work packages by their outputs.
+Resolve values from repo/environment/cluster, not assumptions.
+If required fact is missing → STATUS=BLOCKED and stop.
+
+During implementation
+─────────────────────
+Change only the active INF work package scope.
+Prefer existing files/templates over creating alternatives.
+Do not introduce new infra products.
+Do not weaken mesh/security policy.
+Do not expose admin services publicly.
+Keep values non-secret and environment-specific inputs externalised.
+
+Before completion
+─────────────────
+Render/lint manifests/Helm where applicable.
+Run the stated verification.
+Run relevant smoke tests.
+Show evidence.
+Do not claim DONE for unverified work.</pre>
+</section>
+
+<section id="dependencies">
+<h2>8. Infrastructure dependency graph</h2>
+<pre>INF-00 Validate repo/conventions
+   │
+   ▼
+INF-01 Environment/prerequisites
+   │
+   ▼
+INF-02 Namespaces
+   ├───────────────┬──────────────────┬──────────────────┐
+   ▼               ▼                  ▼                  ▼
+INF-03 Identity  INF-04 Postgres     INF-08 Kafka      INF-12 Istio routing
+   │               │                  │                  │
+   │               ▼                  ▼                  ▼
+   │             INF-05 DBs          INF-09 Topics     INF-13 Egress
+   │               │                                     ├──────────┬──────────┐
+   │               ▼                                     ▼          ▼          ▼
+   │             INF-06 Temporal                         INF-14     INF-15     INF-16
+   │               │                                    Neo4j      Foundry    ADO/Graph
+   │               ▼
+   │             INF-07 Temporal namespace/smoke
+   │
+   └──────────────► INF-10 Blob connectivity
+
+INF-11 Redis decision (parallel after namespaces)
+
+Core internal infra:
+INF-04 + INF-06 + INF-08
+          │
+          ▼
+       INF-17 Observability
+          │
+          ├────────► INF-18 Admin runbooks
+          └────────► INF-19 KEDA templates
+
+Required baseline convergence:
+INF-02 + INF-05 + INF-07 + INF-09 + INF-10 + INF-12 + INF-17
+          │
+          ▼
+       INF-20 Deterministic bootstrap
+          │
+          ▼
+       INF-21 Smoke suite
+          │
+          ▼
+       INF-22 Failure drills
+
+INF-20 ──► INF-23 Reset/teardown
+INF-21 + INF-22 + INF-23
+          │
+          ▼
+       INF-24 Platform handoff</pre>
+</section>
+
+<section id="components">
+<h2>9. Infrastructure component naming</h2>
+<table>
+<tr><th>Component</th><th>Release / name</th><th>Namespace / location</th><th>Exposure</th></tr>
+<tr><td>PostgreSQL</td><td><code>aiaad-postgres</code></td><td>aiaad-infra</td><td>Cluster internal; admin port-forward</td></tr>
+<tr><td>Temporal</td><td><code>aiaad-temporal</code></td><td>aiaad-infra</td><td>Cluster internal</td></tr>
+<tr><td>Temporal UI</td><td>chart-managed / documented service name</td><td>aiaad-infra</td><td>Admin port-forward only</td></tr>
+<tr><td>Kafka</td><td><code>aiaad-kafka</code></td><td>aiaad-infra</td><td>Cluster internal</td></tr>
+<tr><td>Redis</td><td><code>aiaad-redis</code> optional</td><td>aiaad-infra</td><td>Cluster internal</td></tr>
+<tr><td>MinIO</td><td><code>aiaad-minio</code> optional AKS</td><td>aiaad-infra</td><td>Cluster internal/admin console private</td></tr>
+<tr><td>Neo4j</td><td>Aura DB instance</td><td>External SaaS/trial</td><td>Approved egress only</td></tr>
+<tr><td>Foundry/OpenAI</td><td>Approved endpoint/deployment</td><td>Azure external</td><td>Approved egress + workload identity</td></tr>
+</table>
+</section>
+
+<section id="namespaces">
+<h2>10. Kubernetes namespaces and Istio boundary</h2>
+<pre>aiaad-infra
+  PostgreSQL
+  Temporal
+  Kafka
+  optional Redis/MinIO/admin tooling
+
+aiaad-platform
+  application APIs
+  workers
+  UI/BFF
+
+existing Istio installation
+  existing approved Gateway
+       │
+       └── project VirtualService → only UI/BFF later
+
+External egress
+  Foundry/OpenAI
+  Neo4j Aura
+  Azure DevOps
+  Microsoft Graph/SharePoint</pre>
+<div class="callout red"><strong>Do not create:</strong> a second Istio Gateway, NGINX Ingress, Traefik, wildcard egress, or public routes to Temporal UI/pgAdmin/Kafka UI/RedisInsight.</div>
+</section>
+
+<section id="database">
+<h2>11. PostgreSQL and pgvector plan</h2>
+<pre>PostgreSQL server: aiaad-postgres
+
+Databases
+─────────
+aiaad
+  pgvector enabled
+  application-owned schemas created/migrated later by aiaad-platform
+
+temporal
+  Temporal persistence
+
+temporal_visibility
+  Temporal visibility</pre>
+<p>Infra owns creation of databases/extensions/technical roles. It must not become the owner of application business migrations. The platform repo retains schema ownership for project, decision, governance, context, quality, elicitation, dependency, impact, planning, integration and audit domains.</p>
+</section>
+
+<section id="external">
+<h2>12. External dependency readiness</h2>
+<table>
+<tr><th>Dependency</th><th>Infra establishes</th><th>Infra does not implement</th></tr>
+<tr><td>Neo4j Aura</td><td>Egress, DNS/TLS, secret reference pattern, smoke connection</td><td>Graph domain model/projector</td></tr>
+<tr><td>Azure AI Foundry/OpenAI</td><td>Workload identity, egress, endpoint/deployment config, smoke auth</td><td>LLM Gateway/capabilities/prompts</td></tr>
+<tr><td>Azure DevOps</td><td>Network path, safe secret injection convention</td><td>ADO connector semantics/sync logic</td></tr>
+<tr><td>Microsoft Graph/SharePoint</td><td>Network path and identity prerequisite validation</td><td>SharePoint connector/document logic</td></tr>
+<tr><td>Azure Blob</td><td>Workload identity, container/endpoint configuration and smoke</td><td>Application object-store abstraction</td></tr>
+</table>
+</section>
+
+<section id="sequence">
+<h2>13. Infrastructure work-package sequence</h2>
+<div class="tablewrap"><table>
+<tr><th>ID</th><th>Work package</th><th>Depends on</th><th>Deliverable</th><th>Verification</th></tr>
+<tr><td>INF-00</td><td>Validate existing infra repository and freeze conventions</td><td>None</td><td>Validated repo baseline, AGENTS.md, .ai/skills files, repo README, architecture-decision checklist.</td><td>Produce a repo tree summary, identify any mismatch against this playbook, and confirm there is one deterministic bootstrap entrypoint for Linux/macOS and one for PowerShell.</td></tr>
+<tr><td>INF-01</td><td>Establish environment values and prerequisite checks</td><td>INF-00</td><td>verify-prerequisites scripts plus environments/hackathon non-secret values template and documented required operator inputs.</td><td>Run against the target AKS context. Missing required values must produce an actionable BLOCKED result rather than guessed defaults.</td></tr>
+<tr><td>INF-02</td><td>Create and configure Kubernetes namespaces</td><td>INF-01</td><td>Idempotent namespace manifests/bootstrap logic.</td><td>Apply twice without error; show namespace labels/annotations and prove no third project namespace or ingress stack is created.</td></tr>
+<tr><td>INF-03</td><td>Establish workload-identity and service-account conventions</td><td>INF-02</td><td>Reusable service-account/workload-identity templates and verification scripts.</td><td>Deploy a minimal identity test pod/service account using an approved UAMI reference and prove expected Azure authentication path without embedded credentials. If organisational ESI/CSO integration is required but unknown, return BLOCKED.</td></tr>
+<tr><td>INF-04</td><td>Deploy PostgreSQL foundation</td><td>INF-02</td><td>aiaad-postgres Helm release and repeatable install/upgrade values.</td><td>Postgres pod becomes ready, storage persists across pod restart, admin connectivity works via internal service/approved port-forward, and install/upgrade is idempotent.</td></tr>
+<tr><td>INF-05</td><td>Create databases, pgvector and database roles</td><td>INF-04</td><td>Database bootstrap SQL/scripts and access verification.</td><td>Vector extension works; service role A cannot write service role B schema; temporal databases exist and are reachable by Temporal credentials.</td></tr>
+<tr><td>INF-06</td><td>Deploy Temporal OSS</td><td>INF-05</td><td>aiaad-temporal release, Temporal UI, persistence config and admin access instructions.</td><td>Temporal components are healthy and persist workflow history across worker/server pod restarts.</td></tr>
+<tr><td>INF-07</td><td>Create Temporal application namespace and connectivity smoke</td><td>INF-06, INF-02</td><td>Temporal namespace bootstrap plus smoke client/worker.</td><td>Start workflow, wait for signal, restart worker, signal and complete. Record exact Temporal address/namespace values application services will consume.</td></tr>
+<tr><td>INF-08</td><td>Deploy single-node Kafka KRaft</td><td>INF-02</td><td>aiaad-kafka Helm release and documented internal bootstrap address.</td><td>Broker/controller healthy, PVC persists across restart, producer/consumer smoke succeeds.</td></tr>
+<tr><td>INF-09</td><td>Create Kafka topics and non-critical failure smoke</td><td>INF-08</td><td>Topic bootstrap plus publish/consume/failure smoke scripts.</td><td>Topics are idempotently created; sample event round-trip works; stopping Kafka yields a clear degraded-state result rather than destructive recovery.</td></tr>
+<tr><td>INF-10</td><td>Establish AKS object-storage configuration</td><td>INF-02, INF-03</td><td>Storage environment configuration, identity bindings/reference values and connectivity smoke.</td><td>A minimal smoke client can create/read/delete an object in the configured hackathon container using workload identity and no static Azure credential.</td></tr>
+<tr><td>INF-11</td><td>Decide and deploy optional Redis only if justified</td><td>INF-02</td><td>Explicit Redis decision record; optional aiaad-redis release.</td><td>Either documented omission with no dangling config references, or successful set/get/TTL smoke with no domain correctness dependency.</td></tr>
+<tr><td>INF-12</td><td>Configure existing Istio Gateway routing integration</td><td>INF-01, INF-02</td><td>Istio routing templates/environment values and validation script.</td><td>Manifest render shows correct existing gateway reference; no duplicate ingress/gateway created; placeholder app route can be validated when service exists.</td></tr>
+<tr><td>INF-13</td><td>Configure Istio egress requirements</td><td>INF-12</td><td>Required egress resources or documented NO_CHANGE decision per external dependency.</td><td>Connectivity smoke from aiaad-platform to each approved endpoint succeeds or returns BLOCKED with exact missing platform/network prerequisite.</td></tr>
+<tr><td>INF-14</td><td>Validate Neo4j Aura external connectivity</td><td>INF-13</td><td>Neo4j external connection configuration and smoke diagnostic.</td><td>aiaad-platform namespace can connect to the configured Aura database through approved egress; credentials are not committed or logged.</td></tr>
+<tr><td>INF-15</td><td>Validate Azure AI Foundry/OpenAI connectivity</td><td>INF-03, INF-13</td><td>Connectivity/auth smoke tooling and documented non-secret endpoint/deployment config keys.</td><td>Minimal authorised model/deployment metadata or approved low-impact call succeeds using workload identity; no static Azure secret is required.</td></tr>
+<tr><td>INF-16</td><td>Validate Azure DevOps and Microsoft Graph/SharePoint network paths</td><td>INF-13</td><td>External dependency connectivity diagnostics and operator notes.</td><td>Each dependency reports READY or BLOCKED with actionable cause. No secret values appear in logs/output.</td></tr>
+<tr><td>INF-17</td><td>Add infrastructure observability and health diagnostics</td><td>INF-04, INF-06, INF-08</td><td>infra-health scripts/dashboard references/metrics documentation.</td><td>One command/report identifies health for each installed dependency and distinguishes internal service health from external dependency reachability.</td></tr>
+<tr><td>INF-18</td><td>Add admin access helpers and operator runbooks</td><td>INF-04, INF-06, INF-08</td><td>admin/port-forward scripts and concise runbooks.</td><td>Each installed admin tool can be reached via approved local port-forward and no public VirtualService routes target it.</td></tr>
+<tr><td>INF-19</td><td>Prepare KEDA templates without premature activation</td><td>INF-08, INF-17</td><td>Inactive/example KEDA templates and activation checklist.</td><td>Templates render; no active ScaledObject unexpectedly scales an application before the owning service opts in.</td></tr>
+<tr><td>INF-20</td><td>Create deterministic bootstrap orchestration</td><td>INF-02, INF-05, INF-07, INF-09, INF-10, INF-12, INF-17</td><td>One-command/one-script bootstrap flow for shell and PowerShell plus step status output.</td><td>Run bootstrap twice. Second run makes no destructive duplicate resources. A deliberately missing required environment value stops before mutation with BLOCKED guidance.</td></tr>
+<tr><td>INF-21</td><td>Implement infrastructure smoke suite</td><td>INF-20</td><td>Machine-readable and human-readable infra smoke report.</td><td>Smoke suite returns overall READY only when every required component passes and emits actionable component-level failures.</td></tr>
+<tr><td>INF-22</td><td>Run infrastructure failure drills</td><td>INF-21</td><td>Failure-drill report with observed recovery/degraded behaviour and fixes.</td><td>Required persistence survives expected pod restarts; Kafka/Neo4j outage is clearly identified as degradation; Temporal resumes persisted workflow history after recovery.</td></tr>
+<tr><td>INF-23</td><td>Create teardown/reset and recovery tooling</td><td>INF-20</td><td>Dry-run-first teardown/reset scripts and recovery notes.</td><td>Dry run lists exact resources; scoped reset cannot target unrelated namespaces or external cloud resources.</td></tr>
+<tr><td>INF-24</td><td>Final readiness review and handoff to platform repo</td><td>INF-21, INF-22, INF-23</td><td>docs/platform-handoff.md plus final readiness report.</td><td>A developer working only in aiaad-platform can determine every required connection/config name without opening infra implementation files or guessing.</td></tr>
+</table></div>
+<p>Multiple READY work packages may run in parallel, but for a five-person team the infra work should remain primarily with one or both senior developers. The junior developer can safely own admin helpers, diagnostics and smoke tooling after the core patterns are established.</p>
+</section>
+
+<section id="prompts">
+<h2>14. Copy/paste agent prompts</h2>
+<p>Run each prompt from the <code>aiaad-infra</code> repository root or a dedicated Git worktree. The prompt intentionally references repo skill files instead of repeating architecture context.</p>
+<details class="prompt"><summary>INF-00 — Validate existing infra repository and freeze conventions</summary><pre>Execute INF-00: Validate existing infra repository and freeze conventions in the existing aiaad-infra repository.
+
+Prerequisites: None.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/naming.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md, .ai/skills/git-agent-workflow.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Inspect the existing aiaad-infra repository. Do not recreate it. Verify the documented folders, naming conventions, bootstrap entrypoints, environment overlay locations and protected shared files. Add only missing guardrail/context files and a concise repository README if absent.
+
+Required deliverable:
+Validated repo baseline, AGENTS.md, .ai/skills files, repo README, architecture-decision checklist.
+
+Verification:
+Produce a repo tree summary, identify any mismatch against this playbook, and confirm there is one deterministic bootstrap entrypoint for Linux/macOS and one for PowerShell.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-01 — Establish environment values and prerequisite checks</summary><pre>Execute INF-01: Establish environment values and prerequisite checks in the existing aiaad-infra repository.
+
+Prerequisites: INF-00.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/naming.md, .ai/skills/k8s-istio.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Implement prerequisite validation and the hackathon environment values contract. Detect current kubectl context, required namespaces, existing Istio gateway reference/host inputs, required storage class, workload-identity prerequisites and external endpoint configuration. Do not hard-code environment-specific values that are not known.
+
+Required deliverable:
+verify-prerequisites scripts plus environments/hackathon non-secret values template and documented required operator inputs.
+
+Verification:
+Run against the target AKS context. Missing required values must produce an actionable BLOCKED result rather than guessed defaults.
+
+Human review owner:
+Senior developer / platform-aware reviewer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-02 — Create and configure Kubernetes namespaces</summary><pre>Execute INF-02: Create and configure Kubernetes namespaces in the existing aiaad-infra repository.
+
+Prerequisites: INF-01.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/naming.md, .ai/skills/k8s-istio.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Apply/update exactly two project namespaces: aiaad-infra and aiaad-platform. Add only labels/annotations required by the existing Istio and workload-identity patterns discovered in the cluster. Do not modify cluster-wide policies.
+
+Required deliverable:
+Idempotent namespace manifests/bootstrap logic.
+
+Verification:
+Apply twice without error; show namespace labels/annotations and prove no third project namespace or ingress stack is created.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-03 — Establish workload-identity and service-account conventions</summary><pre>Execute INF-03: Establish workload-identity and service-account conventions in the existing aiaad-infra repository.
+
+Prerequisites: INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/identity-secrets.md, .ai/skills/k8s-istio.md, .ai/skills/naming.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create templates/manifests for service accounts and UAMI/federated workload identity references following the existing AKS pattern. This repo must reference approved identity resource IDs/client IDs supplied by environment values; it must not create or guess Azure identities.
+
+Required deliverable:
+Reusable service-account/workload-identity templates and verification scripts.
+
+Verification:
+Deploy a minimal identity test pod/service account using an approved UAMI reference and prove expected Azure authentication path without embedded credentials. If organisational ESI/CSO integration is required but unknown, return BLOCKED.
+
+Human review owner:
+Senior developer / platform owner
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-04 — Deploy PostgreSQL foundation</summary><pre>Execute INF-04: Deploy PostgreSQL foundation in the existing aiaad-infra repository.
+
+Prerequisites: INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/naming.md, .ai/skills/postgres.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Deploy the self-hosted PostgreSQL instance in aiaad-infra using the selected pinned Helm chart/version already approved in repo/environment configuration. Configure persistent storage, service naming, resource requests suitable for hackathon use, readiness and backup expectations appropriate to a non-production trial.
+
+Required deliverable:
+aiaad-postgres Helm release and repeatable install/upgrade values.
+
+Verification:
+Postgres pod becomes ready, storage persists across pod restart, admin connectivity works via internal service/approved port-forward, and install/upgrade is idempotent.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-05 — Create databases, pgvector and database roles</summary><pre>Execute INF-05: Create databases, pgvector and database roles in the existing aiaad-infra repository.
+
+Prerequisites: INF-04.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/postgres.md, .ai/skills/naming.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create databases aiaad, temporal and temporal_visibility. Enable pgvector in aiaad. Create the documented application schema roles and verification queries. Do not create cross-service SQL access. Keep service-specific business migrations out of this repo.
+
+Required deliverable:
+Database bootstrap SQL/scripts and access verification.
+
+Verification:
+Vector extension works; service role A cannot write service role B schema; temporal databases exist and are reachable by Temporal credentials.
+
+Human review owner:
+Senior domain developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-06 — Deploy Temporal OSS</summary><pre>Execute INF-06: Deploy Temporal OSS in the existing aiaad-infra repository.
+
+Prerequisites: INF-05.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/temporal.md, .ai/skills/naming.md, .ai/skills/k8s-istio.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Deploy self-hosted Temporal OSS into aiaad-infra using PostgreSQL persistence/visibility. Keep hackathon topology intentionally non-HA and modest. Do not expose Temporal UI publicly through Istio.
+
+Required deliverable:
+aiaad-temporal release, Temporal UI, persistence config and admin access instructions.
+
+Verification:
+Temporal components are healthy and persist workflow history across worker/server pod restarts.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-07 — Create Temporal application namespace and connectivity smoke</summary><pre>Execute INF-07: Create Temporal application namespace and connectivity smoke in the existing aiaad-infra repository.
+
+Prerequisites: INF-06, INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/temporal.md, .ai/skills/naming.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create Temporal namespace aiaad-hackathon and a minimal smoke workflow/worker fixture under infra smoke tooling only. Do not build application workflows here.
+
+Required deliverable:
+Temporal namespace bootstrap plus smoke client/worker.
+
+Verification:
+Start workflow, wait for signal, restart worker, signal and complete. Record exact Temporal address/namespace values application services will consume.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-08 — Deploy single-node Kafka KRaft</summary><pre>Execute INF-08: Deploy single-node Kafka KRaft in the existing aiaad-infra repository.
+
+Prerequisites: INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/kafka.md, .ai/skills/naming.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Deploy Kafka in aiaad-infra as one KRaft node with combined broker/controller role, replication factor 1 and small persistent storage. Pin the chosen chart/image version. This is explicitly non-production and non-critical.
+
+Required deliverable:
+aiaad-kafka Helm release and documented internal bootstrap address.
+
+Verification:
+Broker/controller healthy, PVC persists across restart, producer/consumer smoke succeeds.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-09 — Create Kafka topics and non-critical failure smoke</summary><pre>Execute INF-09: Create Kafka topics and non-critical failure smoke in the existing aiaad-infra repository.
+
+Prerequisites: INF-08.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/kafka.md, .ai/skills/testing-dod.md, .ai/skills/naming.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create only platform.domain.events, platform.integration.events and platform.dlq with hackathon-appropriate settings. Add smoke tooling that proves Kafka outage is detectable without implying canonical application writes should fail.
+
+Required deliverable:
+Topic bootstrap plus publish/consume/failure smoke scripts.
+
+Verification:
+Topics are idempotently created; sample event round-trip works; stopping Kafka yields a clear degraded-state result rather than destructive recovery.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-10 — Establish AKS object-storage configuration</summary><pre>Execute INF-10: Establish AKS object-storage configuration in the existing aiaad-infra repository.
+
+Prerequisites: INF-02, INF-03.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/storage.md, .ai/skills/identity-secrets.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Configure the AKS environment for Azure Blob as the preferred deployed object-store provider where available. Provide environment values/service account identity references required by application code. Do not deploy MinIO in AKS unless Blob is not available/approved. MinIO remains a local-development concern unless explicitly selected.
+
+Required deliverable:
+Storage environment configuration, identity bindings/reference values and connectivity smoke.
+
+Verification:
+A minimal smoke client can create/read/delete an object in the configured hackathon container using workload identity and no static Azure credential.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-11 — Decide and deploy optional Redis only if justified</summary><pre>Execute INF-11: Decide and deploy optional Redis only if justified in the existing aiaad-infra repository.
+
+Prerequisites: INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/redis.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Inspect the current platform plan for an approved Redis consumer such as LLM gateway rate limiting or short-lived cache. If no concrete consumer exists, record Redis as NOT_INSTALLED and stop this WP successfully. If justified, deploy one small Redis instance and RedisInsight admin access.
+
+Required deliverable:
+Explicit Redis decision record; optional aiaad-redis release.
+
+Verification:
+Either documented omission with no dangling config references, or successful set/get/TTL smoke with no domain correctness dependency.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-12 — Configure existing Istio Gateway routing integration</summary><pre>Execute INF-12: Configure existing Istio Gateway routing integration in the existing aiaad-infra repository.
+
+Prerequisites: INF-01, INF-02.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/k8s-istio.md, .ai/skills/naming.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create project-owned Istio VirtualService templates/config that reference the existing approved gatewayRef and assigned host. Route only user-facing application entrypoints intended by the platform plan. Do not create a Gateway resource unless the cluster owner explicitly changes the decision.
+
+Required deliverable:
+Istio routing templates/environment values and validation script.
+
+Verification:
+Manifest render shows correct existing gateway reference; no duplicate ingress/gateway created; placeholder app route can be validated when service exists.
+
+Human review owner:
+Senior platform developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-13 — Configure Istio egress requirements</summary><pre>Execute INF-13: Configure Istio egress requirements in the existing aiaad-infra repository.
+
+Prerequisites: INF-12.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/k8s-istio.md, .ai/skills/identity-secrets.md, .ai/skills/external-dependencies.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Inspect existing mesh egress policy. Add project-scoped egress resources only if required for Azure AI Foundry/OpenAI, Neo4j Aura, Azure DevOps and Microsoft Graph/SharePoint. Do not bypass mesh/security policy or create permissive wildcard egress.
+
+Required deliverable:
+Required egress resources or documented NO_CHANGE decision per external dependency.
+
+Verification:
+Connectivity smoke from aiaad-platform to each approved endpoint succeeds or returns BLOCKED with exact missing platform/network prerequisite.
+
+Human review owner:
+Senior developer / platform owner
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-14 — Validate Neo4j Aura external connectivity</summary><pre>Execute INF-14: Validate Neo4j Aura external connectivity in the existing aiaad-infra repository.
+
+Prerequisites: INF-13.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/external-dependencies.md, .ai/skills/identity-secrets.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Configure only connection references/secrets for the chosen Neo4j Aura Free/Trial instance; Neo4j is not deployed into AKS. Add a smoke client/diagnostic that connects and executes a harmless query. Do not create application graph schema here.
+
+Required deliverable:
+Neo4j external connection configuration and smoke diagnostic.
+
+Verification:
+aiaad-platform namespace can connect to the configured Aura database through approved egress; credentials are not committed or logged.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-15 — Validate Azure AI Foundry/OpenAI connectivity</summary><pre>Execute INF-15: Validate Azure AI Foundry/OpenAI connectivity in the existing aiaad-infra repository.
+
+Prerequisites: INF-03, INF-13.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/external-dependencies.md, .ai/skills/identity-secrets.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Validate the intended workload-identity path and network access from aiaad-platform to the approved Foundry/OpenAI endpoint/deployment. This WP does not implement the LLM Gateway or store prompts.
+
+Required deliverable:
+Connectivity/auth smoke tooling and documented non-secret endpoint/deployment config keys.
+
+Verification:
+Minimal authorised model/deployment metadata or approved low-impact call succeeds using workload identity; no static Azure secret is required.
+
+Human review owner:
+Senior developer + AI specialist observes
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-16 — Validate Azure DevOps and Microsoft Graph/SharePoint network paths</summary><pre>Execute INF-16: Validate Azure DevOps and Microsoft Graph/SharePoint network paths in the existing aiaad-infra repository.
+
+Prerequisites: INF-13.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/external-dependencies.md, .ai/skills/identity-secrets.md, .ai/skills/k8s-istio.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Validate network/DNS/TLS connectivity needed by the future ADO and SharePoint connectors. For ADO, use a safely injected PAT only in a diagnostic if already approved. For Graph/SharePoint, validate the intended Entra path without implementing connector business logic.
+
+Required deliverable:
+External dependency connectivity diagnostics and operator notes.
+
+Verification:
+Each dependency reports READY or BLOCKED with actionable cause. No secret values appear in logs/output.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-17 — Add infrastructure observability and health diagnostics</summary><pre>Execute INF-17: Add infrastructure observability and health diagnostics in the existing aiaad-infra repository.
+
+Prerequisites: INF-04, INF-06, INF-08.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/observability.md, .ai/skills/testing-dod.md, .ai/skills/k8s-istio.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Integrate with the observability facilities already available in the AKS environment. Add labels/annotations/metrics scraping/config only as required. Provide a concise infra-health diagnostic covering Postgres, Temporal, Kafka, namespaces and external connectivity. Do not deploy a competing observability stack unless explicitly approved.
+
+Required deliverable:
+infra-health scripts/dashboard references/metrics documentation.
+
+Verification:
+One command/report identifies health for each installed dependency and distinguishes internal service health from external dependency reachability.
+
+Human review owner:
+Senior platform developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-18 — Add admin access helpers and operator runbooks</summary><pre>Execute INF-18: Add admin access helpers and operator runbooks in the existing aiaad-infra repository.
+
+Prerequisites: INF-04, INF-06, INF-08.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/k8s-istio.md, .ai/skills/identity-secrets.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create safe kubectl port-forward helpers/runbooks for Temporal UI, pgAdmin and optional Kafka UI/RedisInsight. Admin tools must not be exposed through the public user Istio route.
+
+Required deliverable:
+admin/port-forward scripts and concise runbooks.
+
+Verification:
+Each installed admin tool can be reached via approved local port-forward and no public VirtualService routes target it.
+
+Human review owner:
+Junior developer + senior review
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-19 — Prepare KEDA templates without premature activation</summary><pre>Execute INF-19: Prepare KEDA templates without premature activation in the existing aiaad-infra repository.
+
+Prerequisites: INF-08, INF-17.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/keda.md, .ai/skills/kafka.md, .ai/skills/testing-dod.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Prepare reusable KEDA ScaledObject templates for Kafka-lag-driven workers but do not activate them until an application worker and safe scaling limits exist. Document LLM-quota caution and ownership of max replica limits.
+
+Required deliverable:
+Inactive/example KEDA templates and activation checklist.
+
+Verification:
+Templates render; no active ScaledObject unexpectedly scales an application before the owning service opts in.
+
+Human review owner:
+Senior platform developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-20 — Create deterministic bootstrap orchestration</summary><pre>Execute INF-20: Create deterministic bootstrap orchestration in the existing aiaad-infra repository.
+
+Prerequisites: INF-02, INF-05, INF-07, INF-09, INF-10, INF-12, INF-17.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/testing-dod.md, .ai/skills/git-agent-workflow.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Wire the existing bootstrap scripts so a clean environment can be brought to READY in the documented order. Scripts must be idempotent, fail fast on missing prerequisites and clearly separate required vs optional components.
+
+Required deliverable:
+One-command/one-script bootstrap flow for shell and PowerShell plus step status output.
+
+Verification:
+Run bootstrap twice. Second run makes no destructive duplicate resources. A deliberately missing required environment value stops before mutation with BLOCKED guidance.
+
+Human review owner:
+Both senior developers
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-21 — Implement infrastructure smoke suite</summary><pre>Execute INF-21: Implement infrastructure smoke suite in the existing aiaad-infra repository.
+
+Prerequisites: INF-20.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/testing-dod.md, .ai/skills/observability.md, .ai/skills/external-dependencies.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create a single smoke entrypoint covering namespaces, Postgres/pgvector, Temporal, Kafka, object storage, Istio routing references, Neo4j connectivity, Foundry connectivity and other installed/required dependencies. Optional components should report SKIPPED rather than FAIL when intentionally omitted.
+
+Required deliverable:
+Machine-readable and human-readable infra smoke report.
+
+Verification:
+Smoke suite returns overall READY only when every required component passes and emits actionable component-level failures.
+
+Human review owner:
+Junior developer executes; seniors review
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-22 — Run infrastructure failure drills</summary><pre>Execute INF-22: Run infrastructure failure drills in the existing aiaad-infra repository.
+
+Prerequisites: INF-21.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/testing-dod.md, .ai/skills/temporal.md, .ai/skills/kafka.md, .ai/skills/postgres.md, .ai/skills/observability.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Run controlled non-production failure drills: Kafka restart, Temporal worker/server restart, Postgres pod restart, optional Neo4j connectivity failure, external endpoint blocked/unavailable. Do not run destructive chaos against shared cluster services.
+
+Required deliverable:
+Failure-drill report with observed recovery/degraded behaviour and fixes.
+
+Verification:
+Required persistence survives expected pod restarts; Kafka/Neo4j outage is clearly identified as degradation; Temporal resumes persisted workflow history after recovery.
+
+Human review owner:
+Both senior developers; AI specialist can record observations
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-23 — Create teardown/reset and recovery tooling</summary><pre>Execute INF-23: Create teardown/reset and recovery tooling in the existing aiaad-infra repository.
+
+Prerequisites: INF-20.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/infra-architecture.md, .ai/skills/testing-dod.md, .ai/skills/identity-secrets.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Create safe hackathon reset/teardown scripts that remove only resources owned by aiaad-infra/aiaad-platform according to explicit flags. Default must be non-destructive/dry-run. Protect external Neo4j/Foundry/ADO/SharePoint resources from deletion.
+
+Required deliverable:
+Dry-run-first teardown/reset scripts and recovery notes.
+
+Verification:
+Dry run lists exact resources; scoped reset cannot target unrelated namespaces or external cloud resources.
+
+Human review owner:
+Senior developer
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+<details class="prompt"><summary>INF-24 — Final readiness review and handoff to platform repo</summary><pre>Execute INF-24: Final readiness review and handoff to platform repo in the existing aiaad-infra repository.
+
+Prerequisites: INF-21, INF-22, INF-23.
+
+Before changing anything:
+- Read AGENTS.md.
+- Read .ai/skills/testing-dod.md, .ai/skills/external-dependencies.md, .ai/skills/naming.md, .ai/skills/k8s-istio.md.
+- Inspect the current repo and target AKS/environment state.
+- Verify the prerequisite INF work packages are actually usable.
+- If a required environment/architecture value is absent or conflicting, return STATUS=BLOCKED with exact evidence. Do not guess.
+
+Scope:
+Produce the final non-secret infrastructure handoff contract for aiaad-platform: service DNS names, ports, Temporal address/namespace, Kafka bootstrap/topic names, Postgres host/database expectations, object-store provider, Istio gatewayRef/host, external endpoint config keys and known optional/degraded components. Do not include credentials.
+
+Required deliverable:
+docs/platform-handoff.md plus final readiness report.
+
+Verification:
+A developer working only in aiaad-platform can determine every required connection/config name without opening infra implementation files or guessing.
+
+Human review owner:
+Whole development team
+
+Follow the common execution protocol in this playbook.
+Do not introduce another ingress/gateway, new infrastructure technology, public admin endpoint, cross-service business schema migration, static Azure credential or secret committed to Git.
+Return exactly:
+STATUS
+FILES CHANGED
+COMMANDS/TESTS RUN
+EXIT-CRITERION EVIDENCE
+BLOCKERS/DEVIATIONS</pre></details>
+</section>
+
+<section id="roles">
+<h2>15. Human review roles</h2>
+<table>
+<tr><th>Role</th><th>Infra responsibility</th></tr>
+<tr><td>Senior developer A</td><td>PostgreSQL, Temporal, identity/security-sensitive integration, bootstrap correctness.</td></tr>
+<tr><td>Senior developer B</td><td>AKS/Helm/Istio, Kafka, observability, external connectivity, operational readiness.</td></tr>
+<tr><td>Junior developer</td><td>Admin port-forward helpers, smoke scripts, diagnostics, documentation and bounded Helm/value changes under senior review.</td></tr>
+<tr><td>AI specialist — non-coder</td><td>Observe Foundry connectivity and later AI-platform readiness; record test results. Not responsible for Kubernetes changes.</td></tr>
+<tr><td>BA — non-coder</td><td>No infra coding responsibility. Can validate that demo prerequisites/operational dependencies are documented and understandable.</td></tr>
+</table>
+<div class="callout"><strong>Review rule:</strong> coding agents may generate Helm values/scripts, but namespace, Istio, identity, secrets, database grants and destructive/reset changes require a senior developer to inspect the actual diff before apply/merge.</div>
+</section>
+
+<section id="smoke">
+<h2>16. Readiness and failure model</h2>
+<h3>Final infra-health states</h3>
+<pre>READY       required component installed/reachable and smoke passed
+DEGRADED    optional/non-critical capability unavailable; core platform may proceed
+SKIPPED     optional component deliberately not installed
+BLOCKED     required external value/permission/network dependency missing
+FAILED      installed required component does not satisfy verification</pre>
+
+<h3>Expected failure independence</h3>
+<table>
+<tr><th>Failure</th><th>Expected infra interpretation</th></tr>
+<tr><td>Kafka unavailable</td><td>DEGRADED. Kafka-dependent projections will lag later; canonical platform persistence must be able to continue.</td></tr>
+<tr><td>Neo4j Aura unavailable</td><td>DEGRADED. Graph features unavailable; Postgres remains canonical.</td></tr>
+<tr><td>Temporal unavailable</td><td>FAILED for workflow-dependent platform readiness. Persisted workflow history must survive restart/recovery.</td></tr>
+<tr><td>Postgres unavailable</td><td>FAILED. Canonical application and Temporal persistence unavailable.</td></tr>
+<tr><td>Foundry throttled/unreachable</td><td>BLOCKED/DEGRADED depending on phase; infra reports connectivity, app handles retry later.</td></tr>
+<tr><td>SharePoint integration blocked</td><td>DEGRADED for hackathon if mock connector is available later.</td></tr>
+<tr><td>ADO unavailable</td><td>DEGRADED for analysis flows; publication capability not ready.</td></tr>
+</table>
+</section>
+
+<section id="handoff">
+<h2>17. Platform handoff contract</h2>
+<p>The final infra output should provide <code>aiaad-platform</code> with non-secret connection/config facts only.</p>
+<pre>Infrastructure handoff
+──────────────────────
+Kubernetes
+  appNamespace = aiaad-platform
+  infraNamespace = aiaad-infra
+  istioGatewayRef = environment-supplied approved reference
+  publicHost = environment-supplied approved host
+
+Postgres
+  host/service = actual aiaad-postgres service DNS
+  port = discovered/configured chart service port
+  applicationDatabase = aiaad
+  temporalDatabase = temporal
+  temporalVisibilityDatabase = temporal_visibility
+
+Temporal
+  address = internal service address
+  namespace = aiaad-hackathon
+
+Kafka
+  bootstrapServers = internal service address
+  domainTopic = platform.domain.events
+  integrationTopic = platform.integration.events
+  dlqTopic = platform.dlq
+
+Object storage
+  provider = azure-blob | minio
+  endpoint/account/container config keys = documented, non-secret
+
+External
+  neo4jUri config key
+  foundryEndpoint/deployment config keys
+  ado organisation/base-url config key
+  graph/sharepoint endpoint/config keys
+
+Optional
+  redisInstalled = true|false
+  redisAddress config key when installed</pre>
+</section>
+
+<section id="done">
+<h2>18. Final infrastructure Definition of Done</h2>
+<ul class="check">
+<li>Existing aiaad-infra repo is validated and governed by AGENTS.md/.ai skills.</li>
+<li>Exactly aiaad-infra and aiaad-platform project namespaces exist with correct discovered mesh/identity configuration.</li>
+<li>No second ingress controller or Istio Gateway has been introduced.</li>
+<li>PostgreSQL is persistent and databases aiaad, temporal and temporal_visibility exist.</li>
+<li>pgvector works in aiaad.</li>
+<li>Temporal OSS is healthy, persistent and has aiaad-hackathon namespace.</li>
+<li>Temporal wait/signal/restart smoke passes.</li>
+<li>Kafka single-node KRaft is healthy and approved topics exist.</li>
+<li>Kafka is documented/tested as non-critical.</li>
+<li>Azure Blob connectivity works using workload identity, or an explicit approved alternative is documented.</li>
+<li>Redis is either intentionally omitted or deployed for a named use case.</li>
+<li>Istio VirtualService configuration references the existing approved Gateway and host.</li>
+<li>Required external egress/connectivity to Neo4j Aura, Foundry, ADO and Microsoft Graph is READY or has an explicit BLOCKED/degraded decision.</li>
+<li>Admin tooling is private and reachable by approved operator method.</li>
+<li>One deterministic bootstrap entrypoint can establish required infra idempotently.</li>
+<li>One infra smoke command produces READY/DEGRADED/SKIPPED/BLOCKED/FAILED per component.</li>
+<li>Failure drills have been run for critical self-hosted components.</li>
+<li>Reset/teardown tooling defaults to safe/dry-run and cannot delete unrelated/external resources.</li>
+<li>docs/platform-handoff.md gives the platform team every non-secret connection/config name needed.</li>
+</ul>
+<div class="callout green"><strong>Success criterion:</strong> after INF-24, a developer can move to the <code>aiaad-platform</code> repository and start building/deploying services without having to invent an infrastructure name, endpoint, namespace, routing convention or dependency behaviour.</div>
+</section>
+
+</main>
+</div>
+<footer>aiaad-infra — Agent-Executable Infrastructure Execution Playbook · Dedicated hackathon infrastructure edition</footer>
+</body>
+</html>

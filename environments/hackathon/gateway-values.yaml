@@ -1,0 +1,11 @@
+# environments/hackathon/gateway-values.yaml
+# Gateway definition referencing existing Istio Gateway configuration.
+# Do NOT deploy another gateway; virtual services must target these values.
+
+gateway:
+  # The name of the existing shared gateway in the cluster
+  name: "aiaad-gateway"
+  # The namespace where the shared gateway resides
+  namespace: "istio-system"
+  # The public-facing host configured on the gateway
+  host: "hackathon.aiaad.org"

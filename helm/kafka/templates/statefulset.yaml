@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: aiaad-kafka-controller
+  labels:
+    app.kubernetes.io/name: kafka
+    app.kubernetes.io/instance: aiaad-kafka
+spec:
+  replicas: {{ .Values.kafka.replicas }}
+  serviceName: aiaad-kafka-controller-headless
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kafka
+      app.kubernetes.io/instance: aiaad-kafka
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kafka
+        app.kubernetes.io/instance: aiaad-kafka
+    spec:
+      securityContext:
+        runAsUser: 0
+        fsGroup: 1001
+      containers:
+        - name: kafka
+          image: "{{ .Values.kafka.image }}"
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: LOG_DIR
+              value: /tmp/logs
+          command:
+            - sh
+            - -c
+            - |
+              mkdir -p /var/lib/kafka/data
+              chown -R 1001:1001 /var/lib/kafka/data
+              sed -i 's|log.dirs=.*|log.dirs=/var/lib/kafka/data|g' /opt/kafka/config/server.properties
+              CLUSTER_ID=$$(bin/kafka-storage.sh random-uuid)
+              # Only format if data dir is empty (to support restarts with PVC)
+              if [ -z "$$(ls -A /var/lib/kafka/data)" ]; then
+                bin/kafka-storage.sh format --standalone -t $$CLUSTER_ID -c /opt/kafka/config/server.properties
+              fi
+              chown -R 1001:1001 /var/lib/kafka/data
+              su -s /bin/sh -c 'exec bin/kafka-server-start.sh /opt/kafka/config/server.properties \
+                --override advertised.listeners=PLAINTEXT://aiaad-kafka:9092,CONTROLLER://aiaad-kafka-controller-0.aiaad-kafka-controller-headless.{{ .Release.Namespace }}.svc.cluster.local:9093,PLAINTEXT_HOST://localhost:29092 \
+                --override listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT \
+                --override listeners=PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093,PLAINTEXT_HOST://0.0.0.0:29092 \
+                --override inter.broker.listener.name=PLAINTEXT \
+                --override controller.listener.names=CONTROLLER \
+                --override node.id=1 \
+                --override process.roles=broker,controller' kafka
+          ports:
+            - containerPort: 9092
+              name: tcp-client
+            - containerPort: 9093
+              name: tcp-controller
+            - containerPort: 29092
+              name: tcp-external
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/kafka
+          resources:
+{{ toYaml .Values.kafka.resources | indent 12 }}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        storageClassName: {{ .Values.kafka.persistence.storageClass | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.kafka.persistence.size | quote }}

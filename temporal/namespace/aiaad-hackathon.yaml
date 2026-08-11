@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aiaad-hackathon
+  labels:
+    project: aiaad-platform
+    environment: hackathon
+    istio-injection: enabled

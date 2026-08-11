@@ -1,0 +1,12 @@
+# Infra architecture
+- Repo is aiaad-infra; application code belongs in aiaad-platform.
+- Exactly two project namespaces: aiaad-infra and aiaad-platform.
+- PostgreSQL, Temporal OSS and Kafka are self-hosted in aiaad-infra.
+- PostgreSQL is the shared physical DB server for hackathon; databases: aiaad, temporal, temporal_visibility.
+- pgvector is enabled in aiaad.
+- Kafka is one-node KRaft, non-production and non-critical.
+- Temporal is the durable-workflow engine; Kafka is event distribution, not workflow orchestration.
+- Neo4j Aura and Azure AI Foundry/OpenAI are external managed dependencies, not AKS workloads.
+- Redis is optional and should not be installed without a named consumer.
+- Prefer Azure Blob in AKS; MinIO is local unless explicitly selected for AKS.
+- Do not introduce additional infrastructure without an explicit architecture decision.

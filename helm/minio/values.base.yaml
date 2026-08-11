@@ -1,0 +1,22 @@
+mode: standalone
+replicas: 1
+rootUser: minioadmin
+rootPassword: minioadmin
+persistence:
+  enabled: true
+  storageClass: "standard" # to be overridden by deploy script
+  size: "5Gi" # to be overridden by deploy script
+  accessMode: ReadWriteOnce
+
+resources:
+  requests:
+    memory: 256Mi
+    cpu: 250m
+  limits:
+    memory: 512Mi
+    cpu: 500m
+
+buckets:
+  - name: hackathon
+    policy: public
+    purge: false

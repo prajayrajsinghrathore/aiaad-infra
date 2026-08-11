@@ -1,0 +1,36 @@
+{{- if .Values.kowl.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aiaad-kowl
+  labels:
+    app.kubernetes.io/name: kowl
+    app.kubernetes.io/instance: aiaad-kowl
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kowl
+      app.kubernetes.io/instance: aiaad-kowl
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kowl
+        app.kubernetes.io/instance: aiaad-kowl
+    spec:
+      containers:
+        - name: kowl
+          image: "{{ .Values.kowl.image }}"
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: KAFKA_BROKERS
+              value: "aiaad-kafka:9092"
+            - name: KAFKA_TLS_ENABLED
+              value: "false"
+            - name: KAFKA_SASL_ENABLED
+              value: "false"
+          resources:
+{{ toYaml .Values.kowl.resources | indent 12 }}
+{{- end }}

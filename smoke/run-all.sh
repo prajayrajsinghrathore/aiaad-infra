@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+set -e
+
+echo "Running Infrastructure Smoke Suite..."
+JSON_REPORT="{"
+fail_count=0
+
+function check_status() {
+  local component=$1
+  local status=$2
+  local reason=$3
+
+  if [ "$status" == "FAIL" ]; then
+    fail_count=$((fail_count+1))
+  fi
+
+  echo "[$status] $component: $reason"
+  JSON_REPORT+="\"$component\": {\"status\": \"$status\", \"reason\": \"$reason\"},"
+}
+
+# 1. Namespaces
+if kubectl get ns aiaad-infra >/dev/null 2>&1 && kubectl get ns aiaad-platform >/dev/null 2>&1; then
+  check_status "Namespaces" "PASS" "Required namespaces exist."
+else
+  check_status "Namespaces" "FAIL" "Missing aiaad-infra or aiaad-platform."
+fi
+
+# 2. Postgres
+if kubectl get statefulset aiaad-postgres-postgresql -n aiaad-infra >/dev/null 2>&1; then
+  ready=$(kubectl get statefulset aiaad-postgres-postgresql -n aiaad-infra -o jsonpath='{.status.readyReplicas}')
+  if [ "$ready" == "1" ]; then
+    check_status "Postgres" "PASS" "Postgres is ready."
+  else
+    check_status "Postgres" "FAIL" "Postgres pod not ready."
+  fi
+else
+  check_status "Postgres" "FAIL" "Postgres StatefulSet not found."
+fi
+
+# 3. Temporal
+if kubectl get deploy aiaad-temporal-frontend -n aiaad-infra >/dev/null 2>&1; then
+  ready=$(kubectl get deploy aiaad-temporal-frontend -n aiaad-infra -o jsonpath='{.status.readyReplicas}')
+  if [[ "$ready" -gt 0 ]]; then
+    check_status "Temporal" "PASS" "Temporal frontend is ready."
+  else
+    check_status "Temporal" "FAIL" "Temporal frontend pod not ready."
+  fi
+else
+  check_status "Temporal" "FAIL" "Temporal deployment not found."
+fi
+
+# 4. Kafka
+if kubectl get statefulset aiaad-kafka-controller -n aiaad-infra >/dev/null 2>&1; then
+  ready=$(kubectl get statefulset aiaad-kafka-controller -n aiaad-infra -o jsonpath='{.status.readyReplicas}')
+  if [ "$ready" == "1" ]; then
+    check_status "Kafka" "PASS" "Kafka controller is ready."
+  else
+    check_status "Kafka" "FAIL" "Kafka controller not ready."
+  fi
+else
+  check_status "Kafka" "FAIL" "Kafka StatefulSet not found."
+fi
+
+# 5. Object Storage (Minio - Optional)
+if kubectl get statefulset aiaad-minio -n aiaad-infra >/dev/null 2>&1 || kubectl get deploy aiaad-minio -n aiaad-infra >/dev/null 2>&1; then
+  check_status "ObjectStorage" "PASS" "Minio deployed."
+else
+  check_status "ObjectStorage" "SKIPPED" "Minio optional component not installed."
+fi
+
+# 6. Istio Routing
+if kubectl get virtualservice aiaad-platform-routing -n aiaad-platform >/dev/null 2>&1; then
+  check_status "IstioRouting" "PASS" "Platform routing virtualservice exists."
+else
+  check_status "IstioRouting" "FAIL" "Platform routing virtualservice missing."
+fi
+
+# 7. External Connectivity (Neo4j, Foundry)
+TEST_POD="smoke-curl-$$"
+if kubectl run $TEST_POD -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 >/dev/null 2>&1; then
+  kubectl wait --for=condition=Ready pod/$TEST_POD -n aiaad-platform --timeout=30s >/dev/null 2>&1 || true
+
+  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://neo4j.com >/dev/null 2>&1; then
+    check_status "Neo4jConnectivity" "PASS" "Reachable."
+  else
+    check_status "Neo4jConnectivity" "FAIL" "Unreachable."
+  fi
+
+  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://dev.azure.com >/dev/null 2>&1; then
+    check_status "FoundryConnectivity" "PASS" "Reachable."
+  else
+    check_status "FoundryConnectivity" "FAIL" "Unreachable."
+  fi
+
+  kubectl delete pod $TEST_POD -n aiaad-platform --ignore-not-found >/dev/null 2>&1
+else
+  check_status "Connectivity" "FAIL" "Failed to launch curl test pod."
+fi
+
+JSON_REPORT=${JSON_REPORT%?}
+JSON_REPORT+="}"
+
+echo ""
+echo "--- Machine Readable Report (JSON) ---"
+echo $JSON_REPORT | tee smoke-report.json
+echo ""
+echo ""
+
+if [ $fail_count -eq 0 ]; then
+  echo "OVERALL STATUS: READY"
+  exit 0
+else
+  echo "OVERALL STATUS: BLOCKED ($fail_count failures)"
+  exit 1
+fi

@@ -1,0 +1,16 @@
+server:
+  replicaCount: 1
+  frontend:
+    replicaCount: 1
+  history:
+    replicaCount: 1
+  matching:
+    replicaCount: 1
+  worker:
+    replicaCount: 1
+  
+admintools:
+  replicaCount: 1
+
+web:
+  replicaCount: 1
