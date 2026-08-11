@@ -76,29 +76,31 @@ if ($minioSsOk -or $minioDepOk) {
     Add-Check "ObjectStorage" "SKIPPED" "Minio optional component not installed."
 }
 
-# 7. External Connectivity
-$TestPod = "smoke-curl-$PID"
-$null = kubectl run $TestPod -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 2>$null
-if ($LASTEXITCODE -eq 0) {
-    $null = kubectl wait --for=condition=Ready pod/$TestPod -n aiaad-platform --timeout=30s 2>$null
-    
-    $null = kubectl exec -n aiaad-platform $TestPod -- curl -s --connect-timeout 5 -I https://neo4j.com 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Add-Check "Neo4jConnectivity" "PASS" "Reachable."
-    } else {
-        Add-Check "Neo4jConnectivity" "FAIL" "Unreachable."
-    }
+# 7. External Connectivity (Neo4j, OpenAI, ADO/Graph)
+Write-Host "`nExecuting specialized diagnostic scripts..."
 
-    $null = kubectl exec -n aiaad-platform $TestPod -- curl -s --connect-timeout 5 -I https://api.openai.com 2>$null
-    if ($LASTEXITCODE -eq 0) {
-        Add-Check "OpenAiConnectivity" "PASS" "Reachable."
-    } else {
-        Add-Check "OpenAiConnectivity" "FAIL" "Unreachable."
-    }
-    
-    $null = kubectl delete pod $TestPod -n aiaad-platform --ignore-not-found 2>$null
+# Neo4j
+& "$PSScriptRoot\neo4j-connectivity.ps1" >$null 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Add-Check "Neo4jConnectivity" "PASS" "Reachable and queried successfully."
 } else {
-    Add-Check "Connectivity" "FAIL" "Failed to launch curl test pod."
+    Add-Check "Neo4jConnectivity" "FAIL" "Failed to connect or query."
+}
+
+# OpenAI
+& "$PSScriptRoot\openai.ps1" >$null 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Add-Check "OpenAiConnectivity" "PASS" "Reachable."
+} else {
+    Add-Check "OpenAiConnectivity" "FAIL" "Unreachable."
+}
+
+# ADO & Graph/SharePoint
+& "$PSScriptRoot\ado-graph-connectivity.ps1" >$null 2>&1
+if ($LASTEXITCODE -eq 0) {
+    Add-Check "AdoGraphConnectivity" "PASS" "Reachable."
+} else {
+    Add-Check "AdoGraphConnectivity" "FAIL" "Unreachable."
 }
 
 Write-Host "`n--- Machine Readable Report (JSON) ---"

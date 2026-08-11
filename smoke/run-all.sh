@@ -68,26 +68,28 @@ else
   check_status "ObjectStorage" "SKIPPED" "Minio optional component not installed."
 fi
 
-# 7. External Connectivity (Neo4j, Foundry)
-TEST_POD="smoke-curl-$$"
-if kubectl run $TEST_POD -n aiaad-platform --image=curlimages/curl --restart=Never -- sleep 60 >/dev/null 2>&1; then
-  kubectl wait --for=condition=Ready pod/$TEST_POD -n aiaad-platform --timeout=30s >/dev/null 2>&1 || true
+# 7. External Connectivity (Neo4j, OpenAI, ADO/Graph)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://neo4j.com >/dev/null 2>&1; then
-    check_status "Neo4jConnectivity" "PASS" "Reachable."
-  else
-    check_status "Neo4jConnectivity" "FAIL" "Unreachable."
-  fi
-
-  if kubectl exec -n aiaad-platform $TEST_POD -- curl -s --connect-timeout 5 -I https://api.openai.com >/dev/null 2>&1; then
-    check_status "OpenAiConnectivity" "PASS" "Reachable."
-  else
-    check_status "OpenAiConnectivity" "FAIL" "Unreachable."
-  fi
-
-  kubectl delete pod $TEST_POD -n aiaad-platform --ignore-not-found >/dev/null 2>&1
+# Neo4j
+if "${SCRIPT_DIR}/neo4j-connectivity.sh" >/dev/null 2>&1; then
+  check_status "Neo4jConnectivity" "PASS" "Reachable and queried successfully."
 else
-  check_status "Connectivity" "FAIL" "Failed to launch curl test pod."
+  check_status "Neo4jConnectivity" "FAIL" "Failed to connect or query."
+fi
+
+# OpenAI
+if "${SCRIPT_DIR}/openai.sh" >/dev/null 2>&1; then
+  check_status "OpenAiConnectivity" "PASS" "Reachable."
+else
+  check_status "OpenAiConnectivity" "FAIL" "Unreachable."
+fi
+
+# ADO & Graph/SharePoint
+if "${SCRIPT_DIR}/ado-graph-connectivity.sh" >/dev/null 2>&1; then
+  check_status "AdoGraphConnectivity" "PASS" "Reachable."
+else
+  check_status "AdoGraphConnectivity" "FAIL" "Unreachable."
 fi
 
 JSON_REPORT=${JSON_REPORT%?}

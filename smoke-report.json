@@ -1,0 +1,34 @@
+{
+    "OpenAiConnectivity":  {
+                               "status":  "PASS",
+                               "reason":  "Reachable."
+                           },
+    "Temporal":  {
+                     "status":  "PASS",
+                     "reason":  "Temporal frontend is ready."
+                 },
+    "AdoGraphConnectivity":  {
+                                 "status":  "PASS",
+                                 "reason":  "Reachable."
+                             },
+    "Kafka":  {
+                  "status":  "PASS",
+                  "reason":  "Kafka controller is ready."
+              },
+    "Postgres":  {
+                     "status":  "PASS",
+                     "reason":  "Postgres is ready."
+                 },
+    "Neo4jConnectivity":  {
+                              "status":  "FAIL",
+                              "reason":  "Failed to connect or query."
+                          },
+    "ObjectStorage":  {
+                          "status":  "SKIPPED",
+                          "reason":  "Minio optional component not installed."
+                      },
+    "Namespaces":  {
+                       "status":  "PASS",
+                       "reason":  "Required namespaces exist."
+                   }
+}
